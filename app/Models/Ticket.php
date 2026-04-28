@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\HasAttachments;
 use App\Traits\HasComments;
+use App\Traits\HasStatusHistory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -36,7 +37,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 ])]
 class Ticket extends Model
 {
-    use HasComments, HasAttachments;
+    use HasComments, HasAttachments, HasStatusHistory;
     protected $keyType = 'string';
     public $incrementing = false;
 
