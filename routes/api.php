@@ -1,8 +1,11 @@
 <?php
 
 use App\Http\Controllers\Api\v1\ApprovalController;
+use App\Http\Controllers\Api\v1\Attachment\CommentAttachmentController;
+use App\Http\Controllers\Api\v1\Attachment\ErrorReportAttachmentController;
+use App\Http\Controllers\Api\v1\Attachment\FeatureRequestAttachmentController;
+use App\Http\Controllers\Api\v1\Attachment\TicketAttachmentController;
 use App\Http\Controllers\Api\v1\Comment\MentionController;
-use App\Http\Controllers\Api\v1\CommentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\ErrorController;
@@ -12,6 +15,9 @@ use App\Http\Controllers\Api\v1\TIcketConversionController;
 use App\Http\Controllers\Api\v1\Comment\TicketCommentController;
 use App\Http\Controllers\Api\v1\Comment\FeatureRequestCommentController;
 use App\Http\Controllers\Api\v1\Comment\ErrorReportCommentController;
+use App\Http\Controllers\Api\v1\StatusHistory\ErrorReportStatusHistoryController;
+use App\Http\Controllers\Api\v1\StatusHistory\FeatureRequestStatusHistoryController;
+use App\Http\Controllers\Api\v1\StatusHistory\TicketStatusHistoryController;
 
 Route::prefix('v1')->group(function () {
     require __DIR__ . '/auth.php';
@@ -42,6 +48,17 @@ Route::prefix('v1')->group(function () {
             //mentions routes
             Route::get('/comments/{comment}/mentions', [MentionController::class, 'index'])->name('comment-mentions.index');
             Route::get('/mentions/me', [MentionController::class, 'mine'])->name('comment-mentions.me');
+
+            //attachment routes
+            Route::apiResource('tickets.attachments', TicketAttachmentController::class)->only(['index', 'store', 'destroy']);
+            Route::apiResource('errors.attachments', ErrorReportAttachmentController::class)->only(['index', 'store', 'destroy']);
+            Route::apiResource('features.attachments', FeatureRequestAttachmentController::class)->only(['index', 'store', 'destroy']);
+            Route::apiResource('comments.attachments', CommentAttachmentController::class)->only(['index', 'store', 'destroy']);
+
+            //status history routes
+            Route::get('tickets/{ticket}/status', [TicketStatusHistoryController::class, 'index'])->name('ticket.status');
+            Route::get('features/{feature}/status', [FeatureRequestStatusHistoryController::class, 'index'])->name('features.status');
+            Route::get('errors/{error}/status', [ErrorReportStatusHistoryController::class, 'index'])->name('errors.status');
         });
 
         Route::middleware('role:it_staff')->group(function () {
@@ -66,7 +83,10 @@ Route::prefix('v1')->group(function () {
             Route::post('/feature-requests/{feature}/approve', [ApprovalController::class, 'approveFeatureRequest'])
                 ->name('feature-requests.approve');
 
-            
+            //status history routes
+            Route::patch('/tickets/{ticket}/status', [TicketStatusHistoryController::class, 'update']);
+            Route::patch('/features/{feature}/status', [FeatureRequestStatusHistoryController::class, 'update']);
+            Route::patch('/errors/{error}/status', [ErrorReportStatusHistoryController::class, 'update']);
         });
     });
 });
