@@ -16,8 +16,6 @@ use Illuminate\Support\Facades\DB;
 
 trait HandleComments
 {
-    abstract protected function getMentionService(): MentionService;
-
     public function indexComment(Model $parent)
     {
         /** @var User|null $user */
@@ -39,7 +37,7 @@ trait HandleComments
 
     public function storeComment(StoreCommentRequest $request, Model $parent)
     {
-        $mentionService = $this->getMentionService(); 
+        $mentionService = app(MentionService::class);
 
         $mentionedUser = $mentionService->resolve(
             content: $request->validated('content'),

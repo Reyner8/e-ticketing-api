@@ -6,11 +6,21 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Comment\StoreCommentRequest;
 use App\Models\Comment;
 use App\Models\FeatureRequest;
+use App\Services\Comment\MentionService;
 use App\Traits\HandleComments;
 
 class FeatureRequestCommentController extends Controller
 {
     use HandleComments;
+
+    public function __construct(
+        protected MentionService $mentionService
+    ) {}
+
+    protected function getMentionService(): MentionService
+    {
+        return $this->mentionService;
+    }
 
     public function index(FeatureRequest $feature)
     {
