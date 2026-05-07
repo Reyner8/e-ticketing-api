@@ -3,20 +3,26 @@
 namespace App\Traits;
 
 use App\Models\StatusHistory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
+/** @mixin Model */
 trait HasStatusHistory
 {
     public function statusHistories(): MorphMany
     {
+        /** @var Model $this  */
+
         return $this->morphMany(StatusHistory::class, 'statusable');
     }
 
     public function latestStatusHistories(): MorphMany
     {
+        /** @var Model $this  */
+
         return $this->morphMany(StatusHistory::class, 'statusable')
-        ->latest('changed_at')
-        ->limit(1);
+            ->latest('changed_at')
+            ->limit(1);
     }
 
     // Helpers
@@ -25,8 +31,8 @@ trait HasStatusHistory
         return $this->statusHistories()->exists();
     }
 
-    public function statusHistoryCounts() : int 
+    public function statusHistoryCounts(): int
     {
-        return $this->statusHistories()->count();    
+        return $this->statusHistories()->count();
     }
 }
