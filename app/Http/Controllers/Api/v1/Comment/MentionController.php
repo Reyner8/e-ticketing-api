@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\api\v1\Comment;
+namespace App\Http\Controllers\Api\v1\Comment;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
