@@ -43,9 +43,11 @@ class AttachmentPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Attachment $attachment): bool
+    public function delete(User $user, Attachment $attachment): Response
     {
-        return $attachment->uploaded_by === $user->id || $user->isItStaff();
+        return $attachment->uploaded_by === $user->id || $user->isItStaff()
+        ? Response::allow()
+        : Response::deny('You are not allowed to delete this attachment.');
     }
 
     /**

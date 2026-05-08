@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Illuminate\Support\Facades\Gate;
 
 trait HandleAttachments
 {
@@ -47,9 +48,9 @@ trait HandleAttachments
 
     public function destroyAttachments(Model $attachable, Attachment $attachment) : JsonResponse 
     {
-        $this->authorize('delete', $attachment);
+        Gate::authorize('delete', $attachment);
 
-        $attachment = $this->getAttachmentService()->delete(
+        $this->getAttachmentService()->delete(
             attachment: $attachment,
             attachable: $attachable
         );

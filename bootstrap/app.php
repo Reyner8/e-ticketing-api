@@ -3,12 +3,14 @@
 use App\Exceptions\TicketAlreadyConvertedException;
 use App\Exceptions\TicketCannotBeConvertedException;
 use App\Helpers\ApiResponse;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -34,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
             TicketAlreadyConvertedException::class,
             TicketCannotBeConvertedException::class
         ]);
-        
+
         // error code exception
         $exceptions->render(function (\Throwable $e, Request $request) {
 
@@ -58,6 +60,22 @@ return Application::configure(basePath: dirname(__DIR__))
                 );
             }
 
+            if ($e instanceof AuthorizationException) {
+                return ApiResponse::error(
+                    $e->getMessage() ?: 'Forbidden',
+                    null,
+                    403
+                );
+            }
+
+            if ($e instanceof HttpException) {
+                return ApiResponse::error(
+                    $e->getMessage() ?: 'HTTP Error',
+                    null,
+                    $e->getStatusCode()
+                );
+            }
+
             if ($e instanceof ValidationException) {
                 return ApiResponse::error(
                     'Validation failed.',
@@ -67,7 +85,9 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return ApiResponse::error(
-                'Something went wrong.',
+                config('app.debug')
+                    ? $e->getMessage()
+                    : 'Something went wrong.',
                 null,
                 500
             );
