@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\v1\StatusHistory;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StatusHistory\UpdateStatusHistoryRequest;
+use App\Http\Requests\StatusHistory\UpdateTicketStatusRequest;
 use App\Models\Ticket;
 use App\Services\StatusHistoryService;
 use App\Traits\HandleStatusHistory;
@@ -27,7 +27,7 @@ class TicketStatusHistoryController extends Controller
         return $this->indexStatusHistory($request, $ticket);
     }
 
-    public function update(UpdateStatusHistoryRequest $request, Ticket $ticket)
+    public function update(UpdateTicketStatusRequest $request, Ticket $ticket)
     {
         return $this->updateStatus($request, $ticket);
     }

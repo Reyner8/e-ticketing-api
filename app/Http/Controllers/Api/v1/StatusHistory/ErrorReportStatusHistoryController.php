@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\v1\StatusHistory;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StatusHistory\UpdateStatusHistoryRequest;
+use App\Http\Requests\StatusHistory\UpdateErrorReportStatusRequest;
 use App\Models\ErrorReport;
 use App\Services\StatusHistoryService;
 use App\Traits\HandleStatusHistory;
@@ -28,7 +28,7 @@ class ErrorReportStatusHistoryController extends Controller
         return $this->indexStatusHistory($request, $error);    
     }
 
-    public function update(UpdateStatusHistoryRequest $request, ErrorReport $error) : JsonResponse 
+    public function update(UpdateErrorReportStatusRequest $request, ErrorReport $error) : JsonResponse 
     {
         return $this->updateStatus($request, $error);    
     }

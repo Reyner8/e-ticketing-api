@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\v1\StatusHistory;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StatusHistory\UpdateStatusHistoryRequest;
+use App\Http\Requests\StatusHistory\UpdateFeatureRequestStatusRequest;
 use App\Models\FeatureRequest;
 use App\Services\StatusHistoryService;
 use App\Traits\HandleStatusHistory;
@@ -28,7 +28,7 @@ class FeatureRequestStatusHistoryController extends Controller
         return $this->indexStatusHistory($request, $feature);   
     }
 
-    public function update(UpdateStatusHistoryRequest $request, FeatureRequest $feature) : JsonResponse 
+    public function update(UpdateFeatureRequestStatusRequest $request, FeatureRequest $feature) : JsonResponse 
     {
         return $this->updateStatus($request, $feature);    
     }
