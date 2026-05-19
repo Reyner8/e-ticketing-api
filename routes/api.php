@@ -81,8 +81,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/feature-requests', [FeatureController::class, 'store'])->name('feature-requests.store');
             Route::put('/feature-requests/{feature}', [FeatureController::class, 'update'])->name('feature-requests.update');
             Route::delete('/feature-requests/{feature}', [FeatureController::class, 'destroy'])->name('feature-requests.delete');
-            Route::post('/feature-requests/{feature}/approve', [ApprovalController::class, 'approveFeatureRequest'])
-                ->name('feature-requests.approve');
+
+            //approval routes
+            Route::post('/tickets/{ticket}/approve', [ApprovalController::class, 'approveTicket'])->name('tickets.approve');
+            Route::post('/tickets/{ticket}/reject', [ApprovalController::class, 'rejectTicket'])->name('tickets.reject');
+            Route::post('/features/{feature}/approve', [ApprovalController::class, 'approveFeatureRequest'])->name('feature-request.approve');
+            Route::post('/features/{feature}/reject', [ApprovalController::class, 'rejectFeatureRequest'])->name('feature-requests.reject');
+            Route::post('/errors/{error}/approve', [ApprovalController::class, 'approveErrorReport'])->name('error-reports.approve');
+            Route::post('/errors/{error}/reject', [ApprovalController::class, 'rejectErrorReport'])->name('error-reports.reject');
 
             //status history routes
             Route::patch('/tickets/{ticket}/status', [TicketStatusHistoryController::class, 'update']);
