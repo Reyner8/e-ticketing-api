@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-
+use App\Enums\DigestFreq;
+use App\Enums\UserRole;
+use App\Traits\HasApproval;
+use App\Traits\HasAssignment;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,7 +39,7 @@ use Laravel\Sanctum\HasApiTokens;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, HasAssignment;
 
     /**
      * Get the attributes that should be cast.
@@ -47,6 +49,8 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'role' => UserRole::class,
+            'pref_digest_freq' => DigestFreq::class,
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
@@ -57,26 +61,6 @@ class User extends Authenticatable
     {
         return $this->role === 'it_staff';
     }
-
-    public const ROLES = [
-        'admin',
-        'team_lead',
-        'it_staff',
-        'reporter',
-    ];
-
-    public const TEAMS = [
-        'programmer',
-        'network',
-        'hardware',
-    ];
-
-    public const PREF_DIGEST_FREQUENCIES = [
-        'immediate',
-        'hourly',
-        'daily',
-        'weekly',
-    ];
 
     // Relations
     public function reporter()

@@ -2,10 +2,20 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalStatus;
+use App\Enums\AssignedTeam;
+use App\Enums\FeatureRequestStatus;
+use App\Enums\Priorities;
+use App\Enums\RequestType;
+use App\Observers\FeatureRequestObserver;
+use App\Traits\HasActivityLog;
+use App\Traits\HasApproval;
+use App\Traits\HasAssignment;
 use App\Traits\HasAttachments;
 use App\Traits\HasComments;
 use App\Traits\HasStatusHistory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
@@ -32,6 +42,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'sla_time_elapsed',
     'sla_time_remaining',
     'sla_breached',
+    'approval_status',
     'approved_by',
     'rejection_reason',
     'roi_impact',
@@ -41,42 +52,21 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'is_direct_input',
 ])]
 
+#[ObservedBy([FeatureRequestObserver::class])]
+
 class FeatureRequest extends Model
 {
-    use HasComments, HasAttachments, HasStatusHistory;
+    use HasComments, HasAttachments, HasStatusHistory, HasActivityLog, HasAssignment, HasApproval;
     protected $keyType = 'string';
     public $incrementing = false;
 
-    public const REQUEST_TYPES = [
-        'feature_request',
-        'bug_fix',
-    ];
-
-    public const PRIORITIES = [
-        'low',
-        'medium',
-        'high',
-        'critical',
-    ];
-
-    public const STATUSES = [
-        'submission',
-        'pending_approval',
-        'approved',
-        'assigned',
-        'development',
-        'testing',
-        'validation',
-        'completed',
-        'post_implementation_review',
-        'rejected',
-        'cancelled',
-    ];
-
-    public const TEAMS = [
-        'programmer',
-        'network',
-        'hardware',
+    protected $casts = [
+        'status' => FeatureRequestStatus::class,
+        'assigned_team' => AssignedTeam::class,
+        'priority' => Priorities::class,
+        'request_type' => RequestType::class,
+        'approval_status' => ApprovalStatus::class,
+        'approval_date' => 'datetime',
     ];
 
     // Relations

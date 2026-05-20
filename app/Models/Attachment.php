@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasActivityLog;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Model;
 
 use function Symfony\Component\Clock\now;
 
-#[WithoutTimestamps]
 #[Fillable([
     'name',
     'size',
@@ -21,8 +21,12 @@ use function Symfony\Component\Clock\now;
     'uploaded_at',
 ])]
 
+#[WithoutTimestamps]
+
 class Attachment extends Model
 {
+    use HasActivityLog;
+    
     protected $casts = [
         'size' => 'integer',
         'uploaded_at' => 'datetime', 

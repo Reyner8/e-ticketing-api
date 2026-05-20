@@ -2,10 +2,20 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalStatus;
+use App\Enums\AssignedTeam;
+use App\Enums\ErrorCategory;
+use App\Enums\ErrorReportStatus;
+use App\Enums\Priorities;
+use App\Observers\ErrorReportObserver;
+use App\Traits\HasActivityLog;
+use App\Traits\HasApproval;
+use App\Traits\HasAssignment;
 use App\Traits\HasAttachments;
 use App\Traits\HasComments;
 use App\Traits\HasStatusHistory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
@@ -30,38 +40,27 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'sla_breached',
     'source_ticket_id',
     'is_direct_input',
+    'approved_by',
+    'approval_status',
+    'approval_date',
+    'rejection_reason',
 ])]
+
+#[ObservedBy([ErrorReportObserver::class])]
 
 class ErrorReport extends Model
 {
-    use HasComments, HasAttachments, HasStatusHistory;
+    use HasComments, HasAttachments, HasStatusHistory, HasActivityLog, HasAssignment, HasApproval;
     protected $keyType = 'string';
     public $incrementing = false;
 
-    public const CATEGORIES = [
-        'hardware',
-        'network',
-        'software',
-    ];
-
-    public const PRIORITIES = [
-        'low',
-        'medium',
-        'high',
-        'critical',
-    ];
-
-    public const STATUSES = [
-        'pending_approval',
-        'in_progress',
-        'completed',
-        'overdue',
-    ];
-
-    public const TEAMS = [
-        'programmer',
-        'network',
-        'hardware',
+    protected $casts = [
+        'status' => ErrorReportStatus::class,
+        'assigned_team' => AssignedTeam::class,
+        'priority' => Priorities::class,
+        'category' => ErrorCategory::class,
+        'approval_status' => ApprovalStatus::class,
+        'approval_date' => 'datetime',
     ];
 
     // Relations
