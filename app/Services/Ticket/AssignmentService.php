@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Enums\AssignedTeam;
 use App\Enums\TicketStatus;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\ValidationException;
 
 class AssignmentService
@@ -40,14 +41,15 @@ class AssignmentService
         DB::transaction(function () use ($resource, $user, $previousAssignee, $previousStatus) {
             $resource->update([
                 'assigned_to_id' => $user->id,
-                'status' => $this->resolveStatusAfterAssignment($resource)
+                'assignment_date' => Carbon::now(),
+                'status' => $this->resolveStatusAfterAssignment($resource),
             ]);
 
             $description = $previousAssignee
                 ? "Reassign from '{$previousAssignee}' to '{$user->name}'."
                 : "Assign to '{$user->name}'.";
-
-            $this->logService->log(
+            
+                $this->logService->log(
                 loggable: $resource,
                 action: ActivityAction::Assigned,
                 description: $description,

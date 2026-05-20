@@ -3,6 +3,7 @@
 namespace App\Services\Attachment;
 
 use App\Models\Attachment;
+use App\Services\Log\ActivityLogService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\UploadedFile;
@@ -28,12 +29,19 @@ class AttachmentService
         'application/zip'
     ];
 
+    protected ActivityLogService $logService;
+
+    public function __construct(ActivityLogService $logService)
+    {
+        $this->logService = $logService;
+    }
+
     /**
      * Upload file to storage and save metadata to database
      * 
      * @param UploadedFile $file    File from request
      * @param Model $attachable     Resource owner
-     * @param int                   Uploader user id
+     * @param int $uploadedBy       Uploader user id
      * @return Attachment
      */
 
@@ -45,13 +53,20 @@ class AttachmentService
         $folder = $this->resolveFolder($attachable);
         $path = $file->store($folder, 'public');
 
-        return $attachable->attachments()->create([
+        $attachment = $attachable->attachments()->create([
             'name' => $file->getClientOriginalName(),
             'size' => $file->getSize(),
             'type' => $file->getType(),
             'url' => Storage::url($path),
             'uploaded_by' => $uploadedBy
         ]);
+
+        $this->logService->logAttachmentAdded(
+            loggable: $attachable,
+            fileName: $file->getClientOriginalName()
+        );
+
+        return $attachment;
     }
 
     public function getByAttachable(Model $attachable, int $perPage = 15): LengthAwarePaginator
