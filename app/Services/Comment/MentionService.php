@@ -56,9 +56,7 @@ class MentionService
             ->paginate(min($perPage, 50));
     }
 
-    //Todo | Create dispatch job for notification only after comment mentions API work and settle
-
-    // helper
+    // Helper
     private function extractUsernames(string $content): array
     {
         preg_match_all(self::mention_pattern, $content, $matches);
