@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\v1\ActivityLogController;
 use App\Http\Controllers\Api\v1\ApprovalController;
 use App\Http\Controllers\Api\v1\Assignment\TicketAssignmentController;
 use App\Http\Controllers\Api\v1\Attachment\CommentAttachmentController;
@@ -100,6 +101,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/tickets/{ticket}/assign/team', [TicketAssignmentController::class, 'assignTeam']);
             Route::post('/tickets/{ticket}/unassign/user', [TicketAssignmentController::class, 'unassignUser']);
             Route::post('/tickets/{ticket}/unassign/team', [TicketAssignmentController::class, 'unassignTeam']);
+
+            //activity log routes
+            Route::get('tickets/{ticket}/activity-logs', [ActivityLogController::class, 'ticket']);
+            Route::get('errors/{error}/activity-logs', [ActivityLogController::class, 'errorReport']);
+            Route::get('features/{feature}/activity-logs', [ActivityLogController::class, 'featureRequest']);
         });
     });
 });
