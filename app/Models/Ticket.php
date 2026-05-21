@@ -66,7 +66,7 @@ class Ticket extends Model
         'category' => TicketCategory::class,
         'converted_to_type' => ConversionTypes::class,
         'approval_status' => ApprovalStatus::class,
-        'approved_at' => 'datetime',
+        'approval_date' => 'datetime',
         'date_reported' => 'datetime',
         'due_date' => 'datetime',
         'resolved_date' => 'datetime',
@@ -121,19 +121,23 @@ class Ticket extends Model
     }
 
     // helpers
-    public function isConverted()
+    public function isConverted(): bool
     {
         return $this->status === TicketStatus::Converted;
     }
 
-    public function canBeConverted()
+    public function isApproved(): bool
     {
-        return in_array($this->status, [
-            TicketStatus::PendingApproval,
-            TicketStatus::Assigned,
-            TicketStatus::InProgress,
-            TicketStatus::WaitingForUser,
-        ]);
+        return $this->approval_status === ApprovalStatus::Approved;
+    }
+
+    public function canBeConverted(): bool
+    {
+        return in_array(
+            $this->status,
+            TicketStatus::assignableStatuses(),
+            true
+        ) && $this->isApproved();
     }
 
     public function convertedUrl()
