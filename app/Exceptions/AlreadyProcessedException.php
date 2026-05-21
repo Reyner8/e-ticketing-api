@@ -2,18 +2,18 @@
 
 namespace App\Exceptions;
 
+use BackedEnum;
 use Exception;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 
 class AlreadyProcessedException extends Exception
 {
     public function __construct(
         private readonly string $id,
-        private readonly string $currentStatus
+        private readonly BackedEnum $currentStatus
     ) { 
         parent::__construct(
-            "{$id} already processed with {$currentStatus} status."
+            "{$id} already processed with {$currentStatus->value} status."
         );  
     }
 
@@ -23,7 +23,7 @@ class AlreadyProcessedException extends Exception
             'message' => $this->getMessage(),
             'data' => [
                 'id' => $this->id,
-                'current_status' => $this->currentStatus
+                'current_status' => $this->currentStatus->value
             ]
         ], 409);
     }
