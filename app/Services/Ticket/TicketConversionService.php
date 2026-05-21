@@ -3,51 +3,48 @@
 namespace App\Services\Ticket;
 
 use App\Enums\ConversionTypes;
+use App\Enums\ErrorReportStatus;
+use App\Enums\FeatureRequestStatus;
 use App\Enums\TicketStatus;
 use App\Exceptions\ConversionFailedException;
 use App\Models\ErrorReport;
 use App\Models\Ticket;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\TicketAlreadyConvertedException;
 use App\Exceptions\TicketCannotBeConvertedException;
 use App\Models\FeatureRequest;
+use App\Services\Log\ActivityLogService;
 use Illuminate\Database\QueryException;
 
 class TicketConversionService
 {
+    public function __construct(
+        private readonly ActivityLogService $logService
+    ) {}
+
     public function convertToErrorReport(string $ticketId, array $data): ErrorReport
     {
         return DB::transaction(function () use ($ticketId, $data) {
+
+            $ticket = Ticket::lockForUpdate()->findOrFail($ticketId);
+
+            $this->validateConversion($ticket);
+
+            $data = array_merge([
+                'title' => $ticket->title,
+                'description' => $ticket->description,
+                'priority' => $ticket->priority
+            ], $data);
+
             try {
-
-                $ticket = Ticket::lockForUpdate()->findOrFail($ticketId);
-
-                if ($ticket->isConverted()) {
-                    throw new TicketAlreadyConvertedException(
-                        ticketId: $ticket->id,
-                        convertedToType: $ticket->converted_to_type,
-                        convertedToId: $ticket->converted_to_id,
-                        convertedAt: $ticket->converted_at
-                    );
-                }
-
-                if (!$ticket->canBeConverted()) {
-                    throw new TicketCannotBeConvertedException(
-                        ticketId: $ticket->id,
-                        currentStatus: $ticket->status,
-                    );
-                }
-
-
                 $errorReport = ErrorReport::create([
                     'id' => $this->generateCode('ERR'),
                     'title' => $data['title'],
                     'description' => $data['description'],
                     'category' => $data['category'],
                     'priority' => $data['priority'],
-                    'status' => $data['status'],
+                    'status' => ErrorReportStatus::PendingApproval,
                     'reporter_id' => $ticket->reporter_id,
                     'assigned_to_id' => $ticket->assigned_to_id,
                     'assigned_team' => $ticket->assigned_team,
@@ -61,23 +58,25 @@ class TicketConversionService
                     'sla_time_remaining' => $data['sla_time_remaining'] ?? null,
                     'sla_breached' => $data['sla_breached'] ?? false,
                     'source_ticket_id' => $ticket->id,
-                    'is_direct_input' => $data['is_direct_input'],
+                    'is_direct_input' => false,
                 ]);
 
-                $ticket->update([
-                    'status' => TicketStatus::Converted,
-                    'converted_to_type' => ConversionTypes::ErrorReport,
-                    'converted_to_id' => $errorReport->id,
-                    'converted_at' => Carbon::now(),
-                    'converted_by' => Auth::id(),
-                    'conversion_reason' => $data['conversion_reason']
-                ]);
+                $this->markTicketAsConverted(
+                    ticket: $ticket,
+                    conversionType: ConversionTypes::ErrorReport,
+                    convertedId: $errorReport->id,
+                    reason: $data['conversion_reason']
+                );
+
+                $this->logService->logConverted(
+                    loggable: $ticket,
+                    fromType: 'ticket',
+                    toType: 'error_report'
+                );
 
                 return $errorReport;
-
             } catch (TicketAlreadyConvertedException | TicketCannotBeConvertedException $e) {
                 throw $e;
-
             } catch (QueryException $e) {
                 throw new ConversionFailedException(
                     ticketId: $ticket->id,
@@ -93,34 +92,26 @@ class TicketConversionService
     public function convertToFeatureRequest(string $ticketId, array $data): FeatureRequest
     {
         return DB::transaction(function () use ($ticketId, $data) {
+
+            $ticket = Ticket::lockForUpdate()->findOrFail($ticketId);
+
+            $this->validateConversion($ticket);
+
+            $data = array_merge([
+                'title' => $ticket->title,
+                'description' => $ticket->description,
+                'priority' => $ticket->priority
+            ], $data);
+            
             try {
-                $ticket = Ticket::lockForUpdate()->findOrFail($ticketId);
-
-                if ($ticket->isConverted()) {
-                    throw new TicketAlreadyConvertedException(
-                        ticketId: $ticket->id,
-                        convertedToType: $ticket->converted_to_type,
-                        convertedToId: $ticket->converted_to_id,
-                        convertedAt: $ticket->converted_at
-                    );
-                }
-
-                if (!$ticket->canBeConverted()) {
-                    throw new TicketCannotBeConvertedException(
-                        ticketId: $ticket->id,
-                        currentStatus: $ticket->status
-                    );
-                }
-
-
                 $featureRequest = FeatureRequest::create([
                     'id' => $this->generateCode('FR'),
                     'title' => $data['title'],
                     'description' => $data['description'],
                     'request_type' => $data['request_type'],
                     'priority' => $data['priority'],
-                    'status' => $data['status'],
-                    'progress' => $data['progress'],
+                    'status' => FeatureRequestStatus::PendingApproval,
+                    'progress' => 0,
                     'reporter_id' => $ticket->reporter_id,
                     'assigned_to_id' => $ticket->assigned_to_id,
                     'date_submitted' => $ticket->date_reported,
@@ -141,23 +132,26 @@ class TicketConversionService
                     'quality_impact' => $data['quality_impact'] ?? null,
                     'post_implementation_notes' => $data['post_implementation_notes'] ?? null,
                     'source_ticket_id' => $ticket->id,
-                    'is_direct_input' => $data['is_direct_input'],
+                    'is_direct_input' => false,
                 ]);
 
-                $ticket->update([
-                    'status' => 'converted',
-                    'converted_to_type' => 'feature_request',
-                    'converted_to_id' => $featureRequest->id,
-                    'converted_at' => Carbon::now(),
-                    'converted_by' => Auth::id(),
-                    'conversion_reason' => $data['conversion_reason']
-                ]);
+                $this->markTicketAsConverted(
+                    ticket: $ticket,
+                    conversionType: ConversionTypes::FeatureRequest,
+                    convertedId: $featureRequest->id,
+                    reason: $data['conversion_reason']
+                );
+
+                $this->logService->logConverted(
+                    loggable: $ticket,
+                    fromType: 'ticket',
+                    toType: 'feature_request'
+                );
 
                 return $featureRequest;
 
             } catch (TicketAlreadyConvertedException | TicketCannotBeConvertedException $e) {
                 throw $e;
-                
             } catch (QueryException $e) {
                 throw new ConversionFailedException(
                     ticketId: $ticket->id,
@@ -189,5 +183,41 @@ class TicketConversionService
         }
 
         return sprintf('%s-%d-%03d', $prefix, $year, $nextNumber);
+    }
+
+    private function validateConversion(Ticket $ticket): void
+    {
+        if ($ticket->isConverted()) {
+            throw new TicketAlreadyConvertedException(
+                ticketId: $ticket->id,
+                convertedToType: $ticket->converted_to_type,
+                convertedToId: $ticket->converted_to_id,
+                convertedAt: $ticket->converted_at
+            );
+        }
+
+        if (! $ticket->canBeConverted()) {
+            throw new TicketCannotBeConvertedException(
+                ticketId: $ticket->id,
+                currentStatus: $ticket->status,
+                approvalStatus: $ticket->approval_status
+            );
+        }
+    }
+
+    private function markTicketAsConverted(
+        Ticket $ticket,
+        ConversionTypes $conversionType,
+        string $convertedId,
+        string $reason
+    ): void {
+        $ticket->update([
+            'status' => TicketStatus::Converted,
+            'converted_to_type' => $conversionType,
+            'converted_to_id' => $convertedId,
+            'converted_at' => now(),
+            'converted_by' => Auth::id(),
+            'conversion_reason' => $reason
+        ]);
     }
 }
