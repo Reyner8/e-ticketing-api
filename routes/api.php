@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\v1\TIcketConversionController;
 use App\Http\Controllers\Api\v1\Comment\TicketCommentController;
 use App\Http\Controllers\Api\v1\Comment\FeatureRequestCommentController;
 use App\Http\Controllers\Api\v1\Comment\ErrorReportCommentController;
+use App\Http\Controllers\Api\v1\DowntimeRecordController;
 use App\Http\Controllers\Api\v1\StatusHistory\ErrorReportStatusHistoryController;
 use App\Http\Controllers\Api\v1\StatusHistory\FeatureRequestStatusHistoryController;
 use App\Http\Controllers\Api\v1\StatusHistory\TicketStatusHistoryController;
@@ -61,6 +62,10 @@ Route::prefix('v1')->group(function () {
             Route::get('tickets/{ticket}/status', [TicketStatusHistoryController::class, 'index'])->name('ticket.status');
             Route::get('features/{feature}/status', [FeatureRequestStatusHistoryController::class, 'index'])->name('features.status');
             Route::get('errors/{error}/status', [ErrorReportStatusHistoryController::class, 'index'])->name('errors.status');
+
+            //downtime record routes
+            Route::get('downtime-records', [DowntimeRecordController::class, 'index']);
+            Route::get('downtime-records/{downtimeRecord}', [DowntimeRecordController::class, 'show']);
         });
 
         Route::middleware('role:it_staff')->group(function () {
@@ -106,6 +111,13 @@ Route::prefix('v1')->group(function () {
             Route::get('tickets/{ticket}/activity-logs', [ActivityLogController::class, 'ticket']);
             Route::get('errors/{error}/activity-logs', [ActivityLogController::class, 'errorReport']);
             Route::get('features/{feature}/activity-logs', [ActivityLogController::class, 'featureRequest']);
+
+            //downtime record routes
+            Route::post('downtime-records', [DowntimeRecordController::class, 'store']);
+            Route::put('downtime-records/{downtimeRecord}', [DowntimeRecordController::class, 'update']);
+            Route::patch('downtime-records/{downtimeRecord}/resolve', [DowntimeRecordController::class, 'resolve']);
+            Route::delete('downtime-records', [DowntimeRecordController::class, 'destroy']);
+
         });
     });
 });
