@@ -24,7 +24,7 @@ class ErrorDetailResource extends JsonResource
             'reporter_id' => $this->reporter_id,
             'assigned_to_id' => $this->assigned_to_id,
             'assigned_team' => $this->assigned_team,
-            'date_reported' => $this->date_reported,
+            'date_reported' => $this->date_reported->format('Y-m-d H:i:s'),
             'start_date' => $this->start_date,
             'due_date' => $this->due_date,
             'completion_date' => $this->completion_date,

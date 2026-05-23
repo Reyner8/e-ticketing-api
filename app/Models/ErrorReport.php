@@ -61,6 +61,7 @@ class ErrorReport extends Model
         'category' => ErrorCategory::class,
         'approval_status' => ApprovalStatus::class,
         'approval_date' => 'datetime',
+        'date_reported' => 'datetime'
     ];
 
     // Relations

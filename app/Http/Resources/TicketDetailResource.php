@@ -23,7 +23,7 @@ class TicketDetailResource extends JsonResource
             'status' => $this->status,
             'reporter_id' => $this->reporter_id,
             'assigned_to_id' => $this->assigned_to_id,
-            'date_reported' => $this->date_reported,
+            'date_reported' => $this->date_reported->format('Y-m-d H:i:s'),
             'due_date' => $this->due_date,
             'resolved_date' => $this->resolved_date,
             'closed_date' => $this->closed_date,
@@ -38,8 +38,8 @@ class TicketDetailResource extends JsonResource
             'converted_at' => $this->converted_at,
             'converted_by' => $this->converted_by,
             'conversion_reason' => $this->conversion_reason,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at
+            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ];
     }
 }

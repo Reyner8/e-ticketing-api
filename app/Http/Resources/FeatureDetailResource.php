@@ -26,7 +26,7 @@ class FeatureDetailResource extends JsonResource
             'assigned_to_id' =>$this->assigned_to_id,
             'assigned_team' =>$this->assigned_team,
             'date_submitted' =>$this->date_submitted,
-            'approval_date' =>$this->approval_date,
+            'approval_date' =>$this->approval_date?->format('Y-m-d H:i:s'),
             'assignment_date' =>$this->assignment_date,
             'start_date' => $this->start_date,
             'due_date' => $this->due_date,

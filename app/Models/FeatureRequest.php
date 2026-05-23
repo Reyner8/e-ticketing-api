@@ -67,6 +67,7 @@ class FeatureRequest extends Model
         'request_type' => RequestType::class,
         'approval_status' => ApprovalStatus::class,
         'approval_date' => 'datetime',
+        'date_reported' => 'datetime'
     ];
 
     // Relations
