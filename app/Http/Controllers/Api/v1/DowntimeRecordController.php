@@ -24,15 +24,15 @@ class DowntimeRecordController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $records = $this->service->getAll(
+        $downtimeRecord = $this->service->getAll(
             filters: $request->only(['type', 'status', 'impact', 'from_date', 'to_date']),
             perPage: $request->integer('per_page', 15)
         );
 
         return ApiResponse::paginated(
-            $records,
-            DowntimeRecordResource::collection($records),
-            'Downtime records retrieved successfully'
+            $downtimeRecord,
+            DowntimeRecordResource::collection($downtimeRecord),
+            'Downtime downtimeRecord retrieved successfully'
         );
     }
 
@@ -41,10 +41,10 @@ class DowntimeRecordController extends Controller
      */
     public function store(StoreDowntimeRecordRequest $request): JsonResponse
     {
-        $records = $this->service->store($request->validated());
+        $downtimeRecord = $this->service->store($request->validated());
 
         return ApiResponse::success(
-            new DowntimeRecordResource($records),
+            new DowntimeRecordResource($downtimeRecord),
             'Downtime record created successfully',
             201
         );
@@ -53,10 +53,10 @@ class DowntimeRecordController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(DowntimeRecord $records): JsonResponse
+    public function show(DowntimeRecord $downtimeRecord): JsonResponse
     {
         return ApiResponse::success(
-            new DowntimeRecordResource($records->load('reporter')),
+            new DowntimeRecordResource($downtimeRecord->load('reporter')),
             'Downtime record retrieved successfully'
         );
     }
@@ -64,22 +64,22 @@ class DowntimeRecordController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateDowntimeRecordRequest $request, DowntimeRecord $records): JsonResponse
+    public function update(UpdateDowntimeRecordRequest $request, DowntimeRecord $downtimeRecord): JsonResponse
     {
-        $records = $this->service->update($records, $request->validated());
+        $downtimeRecord = $this->service->update($downtimeRecord, $request->validated());
 
         return ApiResponse::success(
-            new DowntimeRecordResource($records),
+            new DowntimeRecordResource($downtimeRecord),
             'Downtime record updated successfully'
         );
     }
 
-    public function resolve(ResolveDowntimeRecordRequest $request, DowntimeRecord $records): JsonResponse 
+    public function resolve(ResolveDowntimeRecordRequest $request, DowntimeRecord $downtimeRecord): JsonResponse 
     {
-        $records = $this->service->resolve($records, $request->validated());
+        $downtimeRecord = $this->service->resolve($downtimeRecord, $request->validated());
 
         return ApiResponse::success(
-            new DowntimeRecordResource($records),
+            new DowntimeRecordResource($downtimeRecord),
             'Downtime record resolved successfully'
         );
     }
@@ -87,9 +87,9 @@ class DowntimeRecordController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(DowntimeRecord $records): JsonResponse
+    public function destroy(DowntimeRecord $downtimeRecord): JsonResponse
     {
-        $this->service->delete($records);
+        $this->service->delete($downtimeRecord);
 
         return ApiResponse::success(
             null,

@@ -116,7 +116,7 @@ Route::prefix('v1')->group(function () {
             Route::post('downtime-records', [DowntimeRecordController::class, 'store']);
             Route::put('downtime-records/{downtimeRecord}', [DowntimeRecordController::class, 'update']);
             Route::patch('downtime-records/{downtimeRecord}/resolve', [DowntimeRecordController::class, 'resolve']);
-            Route::delete('downtime-records', [DowntimeRecordController::class, 'destroy']);
+            Route::delete('downtime-records/{downtimeRecord}', [DowntimeRecordController::class, 'destroy']);
 
         });
     });
