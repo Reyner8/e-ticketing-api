@@ -22,7 +22,7 @@ class TicketController extends Controller
 
     public function index(): JsonResponse
     {
-        $tickets = Ticket::with(['reportedTickets', 'assignedTickets'])
+        $tickets = Ticket::with(['reporter', 'assignee'])
             ->latest()
             ->paginate(10);
         return ApiResponse::paginated(
@@ -61,7 +61,7 @@ class TicketController extends Controller
      */
     public function show(Ticket $ticket): JsonResponse
     {
-        $ticket->load(['reportedTickets', 'assignedTickets']);
+        $ticket->load(['reporter', 'assignee']);
 
         return ApiResponse::success(
             new TicketDetailResource($ticket),
