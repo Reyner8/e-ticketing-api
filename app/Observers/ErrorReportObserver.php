@@ -25,32 +25,29 @@ class ErrorReportObserver
     /**
      * Handle the ErrorReport "updated" event.
      */
-    public function updated(ErrorReport $errorReport): void
+    public function updated(ErrorReport $error): void
     {
-        $dirty = array_keys($errorReport->getDirty());
+        $changes = [];
 
-        if ($dirty === ['status']) {
-            return;
-        }
+        foreach ($error->getChanges() as $field => $newValue) {
 
-        if (array_key_exists('assigned_to', $dirty)) {
-            $errorReport->loadMissing('assignee');
-
-            $this->logService->logAssigned(
-                loggable: $errorReport,
-                assigneeName: $errorReport->assignee?->name ?? 'Unknown'
-            );
-
-            if (array_keys($dirty) === ['assigned_to']) {
-                return;
+            if (in_array($field, [
+                'updated_at',
+                'status',
+                'assigned_to_id'
+            ])) {
+                continue;
             }
-        }
-        
-        $changedFields = array_keys(
-            array_diff_key($dirty, array_flip(['status', 'assigned_to']))
-        );
 
-        $this->logService->logUpdated($errorReport, $changedFields);
+            $changes[$field] = [
+                'old' => $error->getOriginal($field),
+                'new' => $newValue,
+            ];
+        }
+
+        if (!empty($changes)) {
+            $this->logService->logUpdated($error, $changes);
+        }
     }
 
     /**

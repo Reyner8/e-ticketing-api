@@ -25,32 +25,29 @@ class FeatureRequestObserver
     /**
      * Handle the FeatureRequest "updated" event.
      */
-    public function updated(FeatureRequest $featureRequest): void
+    public function updated(FeatureRequest $feature): void
     {
-        $dirty = array_keys($featureRequest->getDirty());
+        $changes = [];
 
-        if ($dirty === ['status']) {
-            return;
-        }
+        foreach ($feature->getChanges() as $field => $newValue) {
 
-        if (array_key_exists('assigned_to', $dirty)) {
-            $featureRequest->loadMissing('assignee');
-
-            $this->logService->logAssigned(
-                loggable: $featureRequest,
-                assigneeName: $featureRequest->assignee?->name ?? 'Unknown'
-            );
-
-            if (array_keys($dirty) === ['assigned_to']) {
-                return;
+            if (in_array($field, [
+                'updated_at',
+                'status',
+                'assigned_to_id'
+            ])) {
+                continue;
             }
+
+            $changes[$field] = [
+                'old' => $feature->getOriginal($field),
+                'new' => $newValue,
+            ];
         }
 
-        $changedFields = array_keys(
-            array_diff_key($dirty, array_flip(['status', 'assigned_to']))
-        );
-
-        $this->logService->logUpdated($featureRequest, $changedFields);
+        if (!empty($changes)) {
+            $this->logService->logUpdated($feature, $changes);
+        }
     }
 
     /**

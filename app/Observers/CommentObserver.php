@@ -13,7 +13,7 @@ class CommentObserver
     /**
      * Handle the Comment "created" event.
      */
-    public function created(Comment $comment): void
+    public function created(Comment $comment, string $preview): void
     {
         $this->logService->logCommented($comment, $preview);
     }
