@@ -7,6 +7,7 @@ use App\Enums\DowntimeType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class StoreDowntimeRecordRequest extends FormRequest
 {
@@ -16,6 +17,15 @@ class StoreDowntimeRecordRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    public function prepareForValidation()
+    {
+        if ($this->filled('title')) {
+            $this->merge([
+                'title' => Str::title(trim($this->title))
+            ]);
+        }
     }
 
     /**

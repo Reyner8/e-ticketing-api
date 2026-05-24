@@ -8,6 +8,7 @@ use Illuminate\Validation\Rule;
 use App\Enums\DowntimeImpact;
 use App\Enums\DowntimeType;
 use App\Enums\DowntimeStatus;
+use Illuminate\Support\Str;
 
 class UpdateDowntimeRecordRequest extends FormRequest
 {
@@ -17,6 +18,15 @@ class UpdateDowntimeRecordRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    public function prepareForValidation()
+    {
+        if ($this->filled('title')) {
+            $this->merge([
+                'title' => Str::title(trim($this->title))
+            ]);
+        }
     }
 
     /**
