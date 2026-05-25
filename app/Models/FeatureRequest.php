@@ -17,6 +17,7 @@ use App\Traits\HasStatusHistory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Fillable([
@@ -94,5 +95,34 @@ class FeatureRequest extends Model
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class, 'feature_request_id');
+    }
+
+    public function completedMilestone(): HasMany
+    {
+        return $this->hasMany(Milestone::class, 'feature_request_id')
+            ->where('is_completed', true);
+    }
+
+    public function pendingMilestone(): HasMany
+    {
+        return $this->hasMany(Milestone::class, 'feature_request_id')
+            ->where('is_completed', false);
+    }
+
+    // Helpers
+    public function calculateOverallProgress(): int
+    {
+        $milestones = $this->milestones;
+
+        if ($milestones->isEmpty()) {
+            return 0;
+        }
+
+        return (int) $milestones->avg('progress');
     }
 }
