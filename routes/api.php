@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\v1\ActivityLogController;
 use App\Http\Controllers\Api\v1\ApprovalController;
+use App\Http\Controllers\Api\v1\Assignment\FeatureRequestAssignmentController;
 use App\Http\Controllers\Api\v1\Assignment\TicketAssignmentController;
 use App\Http\Controllers\Api\v1\Attachment\CommentAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\ErrorReportAttachmentController;
@@ -106,11 +107,17 @@ Route::prefix('v1')->group(function () {
             Route::patch('/features/{feature}/status', [FeatureRequestStatusHistoryController::class, 'update']);
             Route::patch('/errors/{error}/status', [ErrorReportStatusHistoryController::class, 'update']);
 
-            //assignment routes
+            //ticket assignment routes
             Route::post('/tickets/{ticket}/assign/user', [TicketAssignmentController::class, 'assignUser']);
             Route::post('/tickets/{ticket}/assign/team', [TicketAssignmentController::class, 'assignTeam']);
             Route::post('/tickets/{ticket}/unassign/user', [TicketAssignmentController::class, 'unassignUser']);
             Route::post('/tickets/{ticket}/unassign/team', [TicketAssignmentController::class, 'unassignTeam']);
+
+            //feature request assignment routes
+            Route::post('/features/{feature}/assign/user', [FeatureRequestAssignmentController::class, 'assignUser']);
+            Route::post('/features/{feature}/assign/team', [FeatureRequestAssignmentController::class, 'assignTeam']);
+            Route::post('/features/{feature}/unassign/user', [FeatureRequestAssignmentController::class, 'unassignUser']);
+            Route::post('/features/{feature}/unassign/team', [FeatureRequestAssignmentController::class, 'unassignTeam']);
 
             //activity log routes
             Route::get('tickets/{ticket}/activity-logs', [ActivityLogController::class, 'ticket']);

@@ -12,7 +12,12 @@ use Illuminate\Http\JsonResponse;
 
 class ErrorReportAssignmentController extends Controller
 {
-    use HandleAssignment;
+    use HandleAssignment {
+        assignUser as protected traitAssignUser;
+        assignTeam as protected traitAssignTeam;
+        unassignUser as protected traitUnassignUser;
+        unassignTeam as protected traitUnassignTeam;
+    }
 
     public function __construct(
         protected AssignmentService $assignmentService
@@ -25,21 +30,21 @@ class ErrorReportAssignmentController extends Controller
 
     public function assignUser(AssignUserRequest $request, ErrorReport $error): JsonResponse
     {
-        return $this->assignUser($request, $error);
+        return $this->traitAssignUser($request, $error);
     }
 
     public function assignTeam(AssignTeamRequest $request, ErrorReport $error): JsonResponse
     {
-        return $this->assignTeam($request, $error);
+        return $this->traitAssignTeam($request, $error);
     }
     
     public function unassignUser(ErrorReport $error): JsonResponse
     {
-        return $this->unassignUser($error);
+        return $this->traitUnassignUser($error);
     }
 
     public function unassignTeam(ErrorReport $error): JsonResponse
     {
-        return $this->unassignTeam($error);
+        return $this->traitUnassignTeam($error);
     }
 }

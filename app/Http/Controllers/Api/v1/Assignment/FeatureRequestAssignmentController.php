@@ -12,7 +12,12 @@ use Illuminate\Http\JsonResponse;
 
 class FeatureRequestAssignmentController extends Controller
 {
-    use HandleAssignment;
+    use HandleAssignment {
+        assignUser as protected traitAssignUser;
+        assignTeam as protected traitAssignTeam;
+        unassignUser as protected traitUnassignUser;
+        unassignTeam as protected traitUnassignTeam;
+    }
 
     public function __construct(
         protected AssignmentService $assignmentService
@@ -25,21 +30,21 @@ class FeatureRequestAssignmentController extends Controller
 
     public function assignUser(AssignUserRequest $request, FeatureRequest $feature): JsonResponse
     {
-        return $this->assignUser($request, $feature);
+        return $this->traitAssignUser($request, $feature);
     }
 
     public function assignTeam(AssignTeamRequest $request, FeatureRequest $feature): JsonResponse
     {
-        return $this->assignTeam($request, $feature);
+        return $this->traitAssignTeam($request, $feature);
     }
     
     public function unassignUser(FeatureRequest $feature): JsonResponse
     {
-        return $this->unassignUser($feature);
+        return $this->traitUnassignUser($feature);
     }
 
     public function unassignTeam(FeatureRequest $feature): JsonResponse
     {
-        return $this->unassignTeam($feature);
+        return $this->traitUnassignTeam($feature);
     }
 }
