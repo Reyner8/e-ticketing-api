@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\DigestFreq;
 use App\Enums\UserRole;
-use App\Traits\HasApproval;
 use App\Traits\HasAssignment;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
