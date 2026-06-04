@@ -18,12 +18,15 @@ use App\Http\Controllers\Api\v1\TIcketConversionController;
 use App\Http\Controllers\Api\v1\Comment\TicketCommentController;
 use App\Http\Controllers\Api\v1\Comment\FeatureRequestCommentController;
 use App\Http\Controllers\Api\v1\Comment\ErrorReportCommentController;
+use App\Http\Controllers\Api\v1\ConversionHistoryController;
 use App\Http\Controllers\Api\v1\DowntimeRecordController;
 use App\Http\Controllers\Api\v1\MilestoneController;
+use App\Http\Controllers\Api\v1\NotificationController;
 use App\Http\Controllers\Api\v1\StatusHistory\ErrorReportStatusHistoryController;
 use App\Http\Controllers\Api\v1\StatusHistory\FeatureRequestStatusHistoryController;
 use App\Http\Controllers\Api\v1\StatusHistory\TicketStatusHistoryController;
 use App\Http\Controllers\Api\v1\TagController;
+use App\Http\Controllers\Api\v1\TicketWatcherController;
 use App\Http\Controllers\Api\v1\TimelineEntryController;
 
 Route::prefix('v1')->group(function () {
@@ -82,6 +85,28 @@ Route::prefix('v1')->group(function () {
             //tag routes
             Route::get('tags', [TagController::class, 'index']);
             Route::get('tags/{tag}', [TagController::class, 'show']);
+
+            //notification routes
+            Route::get('/notifications', [NotificationController::class, 'index']);
+            Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+            Route::get('/notifications/{notification}', [NotificationController::class, 'show']);
+            Route::patch('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
+            Route::patch('/notifications/read-many', [NotificationController::class, 'markManyAsRead']);
+            Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+            Route::delete('/notifications/read', [NotificationController::class, 'deleteAllRead']);
+            Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy']);
+
+            //ticket watcher routes
+            Route::get('/tickets/{ticket}/watchers', [TicketWatcherController::class, 'index']);
+            Route::get('/tickets/{ticket}/watch/status', [TicketWatcherController::class, 'status']);
+            Route::get('/me/watched-tickets', [TicketWatcherController::class, 'watchedTickets']);
+            Route::post('/tickets/{ticket}/watch', [TicketWatcherController::class, 'watch']);
+            Route::delete('/tickets/{ticket}/watch', [TicketWatcherController::class, 'unwatch']);
+
+            // conversion history routes
+            Route::get('/conversion-history', [ConversionHistoryController::class, 'index']);
+            Route::get('/conversion-history/{history}', [ConversionHistoryController::class, 'show']);
+            Route::get('/tickets/{ticket}/conversion-history', [ConversionHistoryController::class, 'byTicket']);
         });
 
         Route::middleware('role:it_staff')->group(function () {
@@ -156,11 +181,15 @@ Route::prefix('v1')->group(function () {
 
             //tag routes
             Route::post('tags', [TagController::class, 'store']);
-            Route::put('tags', [TagController::class, 'update']);
-            Route::delete('tags', [TagController::class, 'destroy']);
+            Route::put('tags/{tag}', [TagController::class, 'update']);
+            Route::delete('tags/{tag}', [TagController::class, 'destroy']);
             Route::post('{resourceType}/{resourceId}/tags/attach', [TagController::class, 'attach'])->where('resourceType', 'tickets|features|errors');
             Route::post('{resourceType}/{resourceId}/tags/detach', [TagController::class, 'detach'])->where('resourceType', 'tickets|features|errors');
             Route::put('{resourceType}/{resourceId}/tags/sync', [TagController::class, 'sync'])->where('resourceType', 'tickets|features|errors');
+
+            //ticket watcher routes
+            Route::post('tickets/{ticket}/watchers', [TicketWatcherController::class, 'addWatcher']);
+            Route::delete('tickets/{ticket}/watchers/{userId}', [TicketWatcherController::class, 'removeWatcher']);
         });
     });
 });
