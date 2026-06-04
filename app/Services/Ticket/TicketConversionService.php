@@ -14,13 +14,17 @@ use Illuminate\Support\Facades\DB;
 use App\Exceptions\TicketAlreadyConvertedException;
 use App\Exceptions\TicketCannotBeConvertedException;
 use App\Models\FeatureRequest;
+use App\Services\ConversionHistoryService;
 use App\Services\Log\ActivityLogService;
+use App\Services\NotificationService;
 use Illuminate\Database\QueryException;
 
 class TicketConversionService
 {
     public function __construct(
-        private readonly ActivityLogService $logService
+        private readonly ActivityLogService $logService,
+        private readonly NotificationService $notificationService,
+        private readonly ConversionHistoryService $historyService,
     ) {}
 
     public function convertToErrorReport(string $ticketId, array $data): ErrorReport
@@ -68,13 +72,40 @@ class TicketConversionService
                     reason: $data['conversion_reason']
                 );
 
+                // conversion history
+                $this->historyService->record(
+                    ticket: $ticket,
+                    targetType: ConversionTypes::ErrorReport,
+                    targetId: $errorReport->id,
+                    reason: $data['conversion_reason'] ?? null,
+                    notes: $data['notes'] ?? null,
+                );
+
+                // log converted
                 $this->logService->logConverted(
                     loggable: $ticket,
                     fromType: 'ticket',
                     toType: 'error_report'
                 );
 
+                // reporter notification
+                $this->notificationService->notifyTicketConverted(
+                    userId: $ticket->reporter_id,
+                    ticket: $ticket,
+                    toType: 'error_report'
+                );
+
+                // assignee notification
+                if ($ticket->assigned_to_id && $ticket->assigned_to_id !== Auth::id()) {
+                    $this->notificationService->notifyTicketConverted(
+                        userId: $ticket->assigned_to_id,
+                        ticket: $ticket,
+                        toType: 'error_report'
+                    );
+                }
+
                 return $errorReport;
+
             } catch (TicketAlreadyConvertedException | TicketCannotBeConvertedException $e) {
                 throw $e;
             } catch (QueryException $e) {
@@ -142,11 +173,37 @@ class TicketConversionService
                     reason: $data['conversion_reason']
                 );
 
+                // conversion history
+                $this->historyService->record(
+                    ticket: $ticket,
+                    targetType: ConversionTypes::FeatureRequest,
+                    targetId: $featureRequest->id,
+                    reason: $data['conversion_reason'] ?? null,
+                    notes: $data['notes'] ?? null,
+                );
+
+                // log converted
                 $this->logService->logConverted(
                     loggable: $ticket,
                     fromType: 'ticket',
                     toType: 'feature_request'
                 );
+
+                // reporter notification
+                $this->notificationService->notifyTicketConverted(
+                    userId: $ticket->reporter_id,
+                    ticket: $ticket,
+                    toType: 'feature_request'
+                );
+
+                // assignee notification
+                if ($ticket->assigned_to_id && $ticket->assigned_to_id !== Auth::id()) {
+                    $this->notificationService->notifyTicketConverted(
+                        userId: $ticket->assigned_to_id,
+                        ticket: $ticket,
+                        toType: 'feature_request'
+                    );
+                }
 
                 return $featureRequest;
 
