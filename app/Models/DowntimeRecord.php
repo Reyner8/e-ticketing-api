@@ -8,6 +8,7 @@ use App\Enums\DowntimeType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'title',
@@ -43,6 +44,11 @@ class DowntimeRecord extends Model
     public function reporter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reported_by');
+    }
+
+    public function affectedSystems(): HasMany
+    {
+        return $this->hasMany(DowntimeAffectedSystem::class, 'downtime_id')->orderBy('system_name');
     }
 
     // Helpers
@@ -84,5 +90,10 @@ class DowntimeRecord extends Model
         }
 
         return "{$minutes} minutes";
+    }
+
+    public function hasAffectedSystem(): bool
+    {
+        return $this->affectedSystems()->exists();
     }
 }
