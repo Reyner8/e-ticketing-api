@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\v1\Comment\TicketCommentController;
 use App\Http\Controllers\Api\v1\Comment\FeatureRequestCommentController;
 use App\Http\Controllers\Api\v1\Comment\ErrorReportCommentController;
 use App\Http\Controllers\Api\v1\ConversionHistoryController;
+use App\Http\Controllers\Api\v1\DowntimeAffectedSystemController;
 use App\Http\Controllers\Api\v1\DowntimeRecordController;
 use App\Http\Controllers\Api\v1\MilestoneController;
 use App\Http\Controllers\Api\v1\NotificationController;
@@ -111,6 +112,9 @@ Route::prefix('v1')->group(function () {
 
             //merge ticket routes
             Route::get('/tickets/{ticket}/merge', [MergedTicketController::class, 'index']);
+
+            //downtime system affected routes
+            Route::get('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'index']);
         });
 
         Route::middleware('role:it_staff')->group(function () {
@@ -198,6 +202,11 @@ Route::prefix('v1')->group(function () {
             //merge ticket routes
             Route::post('/tickets/{ticket}/merge', [MergedTicketController::class, 'mergeTicket']);
             Route::delete('tickets/{ticket}/merge/{mergedTicketId}', [MergedTicketController::class, 'unmergeTicket']);
+
+            //downtime system affected routes
+            Route::post('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'store']);
+            Route::put('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'sync']);
+            Route::delete('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'destroy']);
         });
     });
 });
