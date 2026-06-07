@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\v1\Attachment\CommentAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\ErrorReportAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\FeatureRequestAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\TicketAttachmentController;
+use App\Http\Controllers\Api\v1\CalendarEventController;
 use App\Http\Controllers\Api\v1\Comment\MentionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -115,6 +116,12 @@ Route::prefix('v1')->group(function () {
 
             //downtime system affected routes
             Route::get('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'index']);
+
+            //calendar event routes
+            Route::get('/calendar-events', [CalendarEventController::class, 'index']);
+            Route::get('/calendar-events/calendar', [CalendarEventController::class, 'calendar']);
+            Route::get('/calendar-events/upcoming', [CalendarEventController::class, 'upcoming']);
+            Route::get('/calendar-events/{event}', [CalendarEventController::class, 'show']);
         });
 
         Route::middleware('role:it_staff')->group(function () {
@@ -207,6 +214,11 @@ Route::prefix('v1')->group(function () {
             Route::post('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'store']);
             Route::put('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'sync']);
             Route::delete('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'destroy']);
+
+            //calendar event routes
+            Route::post('/calendar-events/', [CalendarEventController::class, 'store']);
+            Route::post('/calendar-events/{event}', [CalendarEventController::class, 'update']);
+            Route::delete('/calendar-events/{event}', [CalendarEventController::class, 'destroy']);
         });
     });
 });
