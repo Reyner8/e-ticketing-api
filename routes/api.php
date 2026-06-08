@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\v1\NotificationController;
 use App\Http\Controllers\Api\v1\StatusHistory\ErrorReportStatusHistoryController;
 use App\Http\Controllers\Api\v1\StatusHistory\FeatureRequestStatusHistoryController;
 use App\Http\Controllers\Api\v1\StatusHistory\TicketStatusHistoryController;
+use App\Http\Controllers\Api\v1\SystemConfigurationController;
 use App\Http\Controllers\Api\v1\TagController;
 use App\Http\Controllers\Api\v1\Ticket\MergedTicketController;
 use App\Http\Controllers\Api\v1\TicketWatcherController;
@@ -219,6 +220,16 @@ Route::prefix('v1')->group(function () {
             Route::post('/calendar-events/', [CalendarEventController::class, 'store']);
             Route::post('/calendar-events/{event}', [CalendarEventController::class, 'update']);
             Route::delete('/calendar-events/{event}', [CalendarEventController::class, 'destroy']);
+
+            //system configuration routes
+            Route::get('/system-configuration', [SystemConfigurationController::class, 'index']);
+            Route::get('/system-configuration/key/{key}', [SystemConfigurationController::class, 'showByKey']);
+            Route::get('/system-configuration/{config}', [SystemConfigurationController::class, 'show']);
+            Route::post('/system-configuration', [SystemConfigurationController::class, 'store']);
+            Route::put('/system-configuration/{config}', [SystemConfigurationController::class, 'update']);
+            Route::put('/system-configuration/key/{key}', [SystemConfigurationController::class, 'upsert']);
+            Route::delete('/system-configuration/{config}', [SystemConfigurationController::class, 'destroy']);
+            Route::post('/system-configuration/cache/clear', [SystemConfigurationController::class, 'clearCache']);
         });
     });
 });
