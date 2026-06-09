@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\v1\StatusHistory\FeatureRequestStatusHistoryControl
 use App\Http\Controllers\Api\v1\StatusHistory\TicketStatusHistoryController;
 use App\Http\Controllers\Api\v1\SystemConfigurationController;
 use App\Http\Controllers\Api\v1\TagController;
+use App\Http\Controllers\Api\v1\TeamWorkloadSnapshotController;
 use App\Http\Controllers\Api\v1\Ticket\MergedTicketController;
 use App\Http\Controllers\Api\v1\TicketWatcherController;
 use App\Http\Controllers\Api\v1\TimelineEntryController;
@@ -115,8 +116,7 @@ Route::prefix('v1')->group(function () {
             //merge ticket routes
             Route::get('/tickets/{ticket}/merge', [MergedTicketController::class, 'index']);
 
-            //downtime system affected routes
-            Route::get('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'index']);
+            
 
             //calendar event routes
             Route::get('/calendar-events', [CalendarEventController::class, 'index']);
@@ -212,6 +212,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('tickets/{ticket}/merge/{mergedTicketId}', [MergedTicketController::class, 'unmergeTicket']);
 
             //downtime system affected routes
+            Route::get('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'index']);
             Route::post('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'store']);
             Route::put('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'sync']);
             Route::delete('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'destroy']);
@@ -230,6 +231,14 @@ Route::prefix('v1')->group(function () {
             Route::put('/system-configuration/key/{key}', [SystemConfigurationController::class, 'upsert']);
             Route::delete('/system-configuration/{config}', [SystemConfigurationController::class, 'destroy']);
             Route::post('/system-configuration/cache/clear', [SystemConfigurationController::class, 'clearCache']);
+
+            //team workload snapshot routes
+            Route::get('/team-workload', [TeamWorkloadSnapshotController::class, 'index']);
+            Route::get('/team-workload/latest', [TeamWorkloadSnapshotController::class, 'latest']);
+            Route::get('/team-workload/compare', [TeamWorkloadSnapshotController::class, 'compare']);
+            Route::get('/team-workload/{team}/history', [TeamWorkloadSnapshotController::class, 'history']);
+            Route::get('/team-workload/{snapshot}', [TeamWorkloadSnapshotController::class, 'show']);
+            Route::post('/team-workload/generate', [TeamWorkloadSnapshotController::class, 'generate']);
         });
     });
 });
