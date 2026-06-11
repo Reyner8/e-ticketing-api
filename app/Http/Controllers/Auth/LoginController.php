@@ -18,6 +18,11 @@ class LoginController extends Controller
         $request->authenticate();
 
         $user = $request->user();
+
+        $user->update([
+            'last_login' => now(),
+        ]);
+
         $token = $user->createToken('api-token')->plainTextToken;
 
         return [
