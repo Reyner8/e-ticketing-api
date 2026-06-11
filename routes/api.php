@@ -33,6 +33,7 @@ use App\Http\Controllers\Api\v1\TeamWorkloadSnapshotController;
 use App\Http\Controllers\Api\v1\Ticket\MergedTicketController;
 use App\Http\Controllers\Api\v1\TicketWatcherController;
 use App\Http\Controllers\Api\v1\TimelineEntryController;
+use App\Http\Controllers\Api\v1\UserController;
 
 Route::prefix('v1')->group(function () {
     require __DIR__ . '/auth.php';
@@ -43,6 +44,10 @@ Route::prefix('v1')->group(function () {
         });
 
         Route::middleware('role:admin,it_staff,reporter,team_lead')->group(function () {
+            //user routes
+            Route::get('me', [UserController::class, 'me']);
+            Route::patch('me/preferences', [UserController::class, 'updateMyPreferences']);
+
             //ticket routes
             Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
             Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
@@ -116,13 +121,21 @@ Route::prefix('v1')->group(function () {
             //merge ticket routes
             Route::get('/tickets/{ticket}/merge', [MergedTicketController::class, 'index']);
 
-            
-
             //calendar event routes
             Route::get('/calendar-events', [CalendarEventController::class, 'index']);
             Route::get('/calendar-events/calendar', [CalendarEventController::class, 'calendar']);
             Route::get('/calendar-events/upcoming', [CalendarEventController::class, 'upcoming']);
             Route::get('/calendar-events/{event}', [CalendarEventController::class, 'show']);
+        });
+
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/users', [UserController::class, 'index']);
+            Route::post('/users', [UserController::class, 'store']);
+            Route::get('/users/{user}', [UserController::class, 'show']);
+            Route::put('/users/{user}', [UserController::class, 'update']);
+            Route::delete('/users/{user}', [UserController::class, 'destroy']);
+            Route::patch('/users/{user}/toggle-active', [UserController::class, 'toggleActive']);
+            Route::patch('/users/{user}/preferences', [UserController::class, 'updatePreferences']);
         });
 
         Route::middleware('role:it_staff')->group(function () {

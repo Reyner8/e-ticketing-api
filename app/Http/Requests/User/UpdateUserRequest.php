@@ -6,7 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Enums\UserRole;
 use App\Enums\AssignedTeam;
-use App\Enums\DigestFreq;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rules\Password;
 
 class UpdateUserRequest extends FormRequest
 {
@@ -18,6 +19,15 @@ class UpdateUserRequest extends FormRequest
         return true;
     }
 
+    public function prepareForValidation()
+    {
+        if ($this->filled('name')) {
+            $this->merge([
+                'name' => Str::title(trim($this->name))
+            ]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -26,19 +36,19 @@ class UpdateUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string|max:255',
-            'username' => 'required|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $this->user,
-            'password' => 'sometimes|string|min:8|confirmed',
-            'role' => ['sometimes', 'string', Rule::in(UserRole::values())],      
+            'name' => ['sometimes', 'string', 'max:255'],
+            'username' => ['sometimes', 'string', 'max:255'],
+            'email' => [
+                'sometimes',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($this->route('user'))
+            ],
+            'password' => ['sometimes', Password::min(8)->mixedCase()->numbers()],
+            'role' => ['sometimes', 'string', Rule::in(UserRole::values())],
             'team' => ['nullable', 'string', 'max:255', Rule::in(AssignedTeam::values())],
-            'avatar' => 'nullable|url',
-            'is_active' => 'boolean|default:1',
-            'pref_email_notifications' => 'nullable|boolean',
-            'pref_sla_alerts' => 'nullable|boolean',
-            'pref_downtime_alerts' => 'nullable|boolean',
-            'pref_digest_frequency' => ['nullable', 'string', Rule::in(DigestFreq::values())],
-            'pref_quiet_hours' => 'nullable|string|regex:/^\d{2}:\d{2}-\d{2}:\d{2}$/'
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'is_active' => ['sometimes', 'boolean'],
         ];
     }
 }

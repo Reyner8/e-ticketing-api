@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Enums\AssignedTeam;
 use App\Enums\DigestFreq;
 use App\Enums\UserRole;
 use App\Traits\HasAssignment;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -29,6 +34,7 @@ use Laravel\Sanctum\HasApiTokens;
     'pref_digest_frequency',
     'pref_quiet_hours'
 ])]
+#[WithoutTimestamps]
 
 #[Hidden([
     'password',
@@ -49,31 +55,114 @@ class User extends Authenticatable
     {
         return [
             'role' => UserRole::class,
-            'pref_digest_freq' => DigestFreq::class,
+            'team' => AssignedTeam::class,
+            'pref_digest_frequency' => DigestFreq::class,
             'email_verified_at' => 'datetime',
+            'is_active' => 'boolean',
+            'last_login' => 'datetime',
+            'created_at' => 'datetime',
+            'pref_dark_mode' => 'boolean',
+            'pref_email_notifications' => 'boolean',
+            'pref_sla_alerts' => 'boolean',
+            'pref_downtime_alerts' => 'boolean',
             'password' => 'hashed',
         ];
+    }
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (self $model) {
+            if (empty($model->created_at)) {
+                $model->created_at = now();
+            }
+        });
+    }
+    
+    // Accessors
+    public function getPreferencesAttribute(): array
+    {
+        return [
+            'dark_mode' => $this->pref_dark_mode,
+            'email_notifications' => $this->pref_email_notifications,
+            'sla_alerts' => $this->pref_sla_alerts,
+            'downtime_alerts' => $this->pref_downtime_alerts,
+            'digest_frequency' => $this->pref_digest_frequency?->value,
+            'quiet_hours' => $this->pref_quiet_hours,
+        ];
+    }
+
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (is_null($this->avatar)) {
+            return null;
+        }
+
+        if (str_starts_with($this->avatar, 'http')) {
+            return $this->avatar;
+        }
+
+        return url('/storage/' . $this->avatar);
     }
 
     // Helpers
     public function isItStaff(): bool
     {
-        return $this->role === 'it_staff';
+        return $this->role === UserRole::ItStaff;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::Admin;
+    }
+
+    public function isReporter(): bool
+    {
+        return $this->role === UserRole::Reporter;
+    }
+
+    public function isTeamLead(): bool
+    {
+        return $this->role === UserRole::TeamLead;
+    }
+
+    // Scopes
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeByRole(Builder $query, string $role): Builder
+    {
+        return $query->where('role', $role);
+    }
+
+    public function scopeByTeam(Builder $query, string $team): Builder
+    {
+        return $query->where('team', $team);
     }
 
     // Relations
-    public function reporter()
+    public function reporter(): HasMany
     {
         return $this->hasMany(Ticket::class, 'reporter_id');
     }
 
-    public function assignee()
+    public function assignee(): HasMany
     {
         return $this->hasMany(Ticket::class, 'assigned_to_id');
     }
 
-    public function convertBy()
+    public function convertBy(): HasMany
     {
         return $this->hasMany(Ticket::class, 'converted_by');
+    }
+
+    public function watchedTickets(): BelongsToMany
+    {
+        return $this->belongsToMany(Ticket::class, 'ticket_watchers', 'user_id', 'ticket_id')
+            ->using(TicketWatcher::class)
+            ->withPivot('created_at');
     }
 }

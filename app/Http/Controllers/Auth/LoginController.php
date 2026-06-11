@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Http\Resources\UserResource;
+use App\Http\Resources\User\UserResourceDetail;
 use Illuminate\Http\Request;
 
 class LoginController extends Controller
@@ -26,7 +26,7 @@ class LoginController extends Controller
         $token = $user->createToken('api-token')->plainTextToken;
 
         return [
-            'user' =>   new UserResource($user),
+            'user' =>   new UserResourceDetail($user),
             'token' => $token
         ];
     }

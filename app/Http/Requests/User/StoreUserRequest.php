@@ -3,10 +3,11 @@
 namespace App\Http\Requests\User;
 
 use App\Enums\AssignedTeam;
-use App\Enums\DigestFreq;
 use App\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Str;
 
 class StoreUserRequest extends FormRequest
 {
@@ -18,6 +19,15 @@ class StoreUserRequest extends FormRequest
         return true;
     }
 
+    public function prepareForValidation()
+    {
+        if ($this->filled('name')) {
+            $this->merge([
+                'name' => Str::title(trim($this->name))
+            ]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -26,19 +36,19 @@ class StoreUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $this->user,
-            'password' => 'required|string|min:8|confirmed',
-            'role' => ['required', 'string', Rule::in(UserRole::values())],      
-            'team' => ['nullable', 'string', 'max:255', Rule::in(AssignedTeam::values())],
-            'avatar' => 'nullable|url',
-            'is_active' => 'boolean|default:1',
-            'pref_email_notifications' => 'nullable|boolean',
-            'pref_sla_alerts' => 'nullable|boolean',
-            'pref_downtime_alerts' => 'nullable|boolean',
-            'pref_digest_frequency' => ['nullable', 'string', Rule::in(DigestFreq::values())],
-            'pref_quiet_hours' => 'nullable|string|regex:/^\d{2}:\d{2}-\d{2}:\d{2}$/'
+            'name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'max:255', Rule::unique('users', 'email')],
+            'password' => ['sometimes', Password::min(8)],
+            'role' => ['required', 'string', Rule::in(UserRole::values())],
+            'team' => [
+                'nullable',
+                'string',
+                Rule::in(AssignedTeam::values()),
+                Rule::requiredIf(fn() => $this->role === UserRole::ItStaff->value)
+            ],
+            'avatar' => ['nullable', 'image', 'max:2048'],
+            'is_active' => ['sometimes', 'boolean'],
         ];
     }
 }
