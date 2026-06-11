@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\DowntimeStatus;
 use App\Models\DowntimeRecord;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,10 @@ use Illuminate\Validation\ValidationException;
 
 class DowntimeRecordService
 {
+    public function __construct(
+        private readonly NotificationService $notificationService
+    ) {}
+
     public function store(array $data): DowntimeRecord
     {
         $status = isset($data['end_time'])
@@ -26,6 +31,8 @@ class DowntimeRecordService
         if (! is_null($record->end_time)) {
             $record->update(['duration' => $record->calculateDuration()]);
         }
+
+        $this->notifyStaffAboutDowntime($record);
 
         return $record->load('reporter');
     }
@@ -99,5 +106,20 @@ class DowntimeRecordService
             ->when(isset($filters['to_date']), fn($q) => $q->where('to_date', $filters['to_date']))
             ->latest()  
             ->paginate(min($perPage, 50));
+    }
+
+    // Private
+    private function notifyStaffAboutDowntime(DowntimeRecord $record): void
+    {
+        User::where('role', 'it_staff')
+        ->where('is_active', true)
+        ->where('id', '!=', Auth::id())
+        ->get()
+        ->each(function (User $user) use ($record) {
+            $this->notificationService->notifyDowntimeAlert(
+                userId: $user->id,
+                downtime: $record
+            );
+        });
     }
 }

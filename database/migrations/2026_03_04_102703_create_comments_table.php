@@ -17,8 +17,7 @@ return new class extends Migration
             $table->string('commentable_type');
             $table->foreignId('user_id')
                 ->constrained()
-                ->onUpdate('cascade')
-                ->nullOnDelete();
+                ->onUpdate('cascade');
             $table->text('content');
             $table->boolean('is_internal')->default(false);
             $table->timestamps();

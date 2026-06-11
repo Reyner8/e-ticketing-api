@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\ActivityAction;
+use App\Enums\TicketStatus;
 use App\Models\StatusHistory;
+use App\Models\Ticket;
 use App\Services\Log\ActivityLogService;
-use BackedEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -13,12 +15,11 @@ use Illuminate\Validation\ValidationException;
 
 class StatusHistoryService
 {
-    protected ActivityLogService $logService;
-
-    public function __construct(ActivityLogService $logService)
-    {
-        $this->logService = $logService;
-    }   
+    public function __construct(
+        private readonly ActivityLogService $logService,
+        private readonly NotificationService $notificationService,
+        private readonly TicketWatcherService $watcherService,
+    ) {}
     /**
      * @param Model $resource           Resource whose status has changed
      * @param string $newStatus         New Status
@@ -31,8 +32,8 @@ class StatusHistoryService
         array $extra = []
     ): StatusHistory {
         $previousStatus = $resource->status instanceof \BackedEnum
-        ? $resource->status->value
-        : (string) $resource->status;
+            ? $resource->status->value
+            : (string) $resource->status;
 
         if ($previousStatus === $newStatus) {
             throw ValidationException::withMessages([
@@ -40,7 +41,7 @@ class StatusHistoryService
             ]);
         }
 
-        return DB::transaction(function () use ($resource, $previousStatus, $newStatus, $extra) {
+        $history = DB::transaction(function () use ($resource, $previousStatus, $newStatus, $extra) {
             $resource->update(['status' => $newStatus]);
 
             $history = $resource->statusHistories()->create([
@@ -59,8 +60,39 @@ class StatusHistoryService
 
             return $history;
         });
+
+        //* notification
+        if ($resource instanceof Ticket) {
+            $updateDetails = "Status changed from '{$previousStatus}' to '{$newStatus}'.";
+
+            $this->notificationService->notifyTicketUpdated(
+                userId: $resource->reporter_id,
+                ticket: $resource,
+                updateDetails: $updateDetails
+            );
+
+            if ($resource->assigned_to_id && $resource->assigned_to_id !== Auth::id()) {
+                $this->notificationService->notifyTicketUpdated(
+                    userId: $resource->assigned_to_id,
+                    ticket: $resource,
+                    updateDetails: $updateDetails
+                );
+            }
+
+            //* watcher notification
+            $this->watcherService->notifyWatchers(
+                ticket: $resource,
+                event: ActivityAction::StatusChanged->value,
+                details: [
+                    'previous_status' => $previousStatus,
+                    'new_status' => $newStatus
+                ]
+            );
+        }
+
+        return $history;
     }
-    
+
     public function record(
         Model $resource,
         string $previousStatus,

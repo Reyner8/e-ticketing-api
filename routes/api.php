@@ -50,6 +50,7 @@ Route::prefix('v1')->group(function () {
 
             //ticket routes
             Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
+            Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
             Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
 
             //error report routes
@@ -110,8 +111,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/tickets/{ticket}/watchers', [TicketWatcherController::class, 'index']);
             Route::get('/tickets/{ticket}/watch/status', [TicketWatcherController::class, 'status']);
             Route::get('/me/watched-tickets', [TicketWatcherController::class, 'watchedTickets']);
-            Route::post('/tickets/{ticket}/watch', [TicketWatcherController::class, 'watch']);
-            Route::delete('/tickets/{ticket}/watch', [TicketWatcherController::class, 'unwatch']);
+            Route::post('/tickets/{ticket}/watch', [TicketWatcherController::class, 'toggleWatch']);
 
             //conversion history routes
             Route::get('/conversion-history', [ConversionHistoryController::class, 'index']);
@@ -138,9 +138,22 @@ Route::prefix('v1')->group(function () {
             Route::patch('/users/{user}/preferences', [UserController::class, 'updatePreferences']);
         });
 
+        Route::middleware('role:team_lead')->group(function () {
+            //ticket assignment routes
+            Route::post('/tickets/{ticket}/assign/user', [TicketAssignmentController::class, 'assignUser']);
+            Route::post('/tickets/{ticket}/assign/team', [TicketAssignmentController::class, 'assignTeam']);
+            Route::post('/tickets/{ticket}/unassign/user', [TicketAssignmentController::class, 'unassignUser']);
+            Route::post('/tickets/{ticket}/unassign/team', [TicketAssignmentController::class, 'unassignTeam']);
+            
+            //feature request assignment routes
+            Route::post('/features/{feature}/assign/user', [FeatureRequestAssignmentController::class, 'assignUser']);
+            Route::post('/features/{feature}/assign/team', [FeatureRequestAssignmentController::class, 'assignTeam']);
+            Route::post('/features/{feature}/unassign/user', [FeatureRequestAssignmentController::class, 'unassignUser']);
+            Route::post('/features/{feature}/unassign/team', [FeatureRequestAssignmentController::class, 'unassignTeam']);
+        });
+
         Route::middleware('role:it_staff')->group(function () {
             //ticket routes
-            Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
             Route::put('/tickets/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
             Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('tickets.delete');
             Route::post('/tickets/{ticket}/convert/error-report', [TicketConversionController::class, 'toErrorReport'])
@@ -170,18 +183,6 @@ Route::prefix('v1')->group(function () {
             Route::patch('/tickets/{ticket}/status', [TicketStatusHistoryController::class, 'update']);
             Route::patch('/features/{feature}/status', [FeatureRequestStatusHistoryController::class, 'update']);
             Route::patch('/errors/{error}/status', [ErrorReportStatusHistoryController::class, 'update']);
-
-            //ticket assignment routes
-            Route::post('/tickets/{ticket}/assign/user', [TicketAssignmentController::class, 'assignUser']);
-            Route::post('/tickets/{ticket}/assign/team', [TicketAssignmentController::class, 'assignTeam']);
-            Route::post('/tickets/{ticket}/unassign/user', [TicketAssignmentController::class, 'unassignUser']);
-            Route::post('/tickets/{ticket}/unassign/team', [TicketAssignmentController::class, 'unassignTeam']);
-
-            //feature request assignment routes
-            Route::post('/features/{feature}/assign/user', [FeatureRequestAssignmentController::class, 'assignUser']);
-            Route::post('/features/{feature}/assign/team', [FeatureRequestAssignmentController::class, 'assignTeam']);
-            Route::post('/features/{feature}/unassign/user', [FeatureRequestAssignmentController::class, 'unassignUser']);
-            Route::post('/features/{feature}/unassign/team', [FeatureRequestAssignmentController::class, 'unassignTeam']);
 
             //activity log routes
             Route::get('tickets/{ticket}/activity-logs', [ActivityLogController::class, 'ticket']);

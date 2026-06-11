@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -31,6 +32,10 @@ class UserService
         if (isset($data['avatar']) && $data['avatar'] instanceof UploadedFile) {
             $this->deleteAvatar($user->avatar);
             $data['avatar'] = $this->uploadAvatar($data['avatar']);
+        }
+
+        if (isset($data['role']) && UserRole::from($data['role']) !== UserRole::ItStaff) {
+            $data['team'] = null;
         }
 
         $user->update($data);

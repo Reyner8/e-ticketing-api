@@ -46,7 +46,13 @@ class UpdateUserRequest extends FormRequest
             ],
             'password' => ['sometimes', Password::min(8)->mixedCase()->numbers()],
             'role' => ['sometimes', 'string', Rule::in(UserRole::values())],
-            'team' => ['nullable', 'string', 'max:255', Rule::in(AssignedTeam::values())],
+            'team' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::in(AssignedTeam::values()),
+                Rule::requiredIf(fn() => $this->role === UserRole::ItStaff->value)
+            ],
             'avatar' => ['nullable', 'image', 'max:2048'],
             'is_active' => ['sometimes', 'boolean'],
         ];

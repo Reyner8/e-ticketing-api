@@ -2,6 +2,7 @@
 
 namespace App\Services\Comment;
 
+use App\Enums\ActivityAction;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\Comment\CommentResource;
@@ -15,6 +16,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Log\ActivityLogService;
 use App\Services\NotificationService;
+use App\Services\TicketWatcherService;
 use Illuminate\Support\Str;
 
 class CommentService
@@ -22,7 +24,8 @@ class CommentService
     public function __construct(
         private readonly MentionService $mentionService,
         private readonly ActivityLogService $logService,
-        private readonly NotificationService $notificationService
+        private readonly NotificationService $notificationService,
+        private readonly TicketWatcherService $watcherService
     ) {}
 
     public function indexComment(Model $parent)
@@ -91,6 +94,18 @@ class CommentService
                     mentionedBy: $mentionerName
                 );
             }
+        }
+
+        //* watcher notification
+        if ($parent instanceof Ticket) {
+            $this->watcherService->notifyWatchers(
+                ticket: $parent,
+                event: ActivityAction::Commented->value,
+                details: [
+                    'preview' => Str::limit($request->validated('content'), 100),
+                    'commenter' => Auth::user()?->name,
+                ]
+            );
         }
 
         return new CommentResource(

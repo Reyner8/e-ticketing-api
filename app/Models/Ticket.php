@@ -19,6 +19,8 @@ use App\Traits\HasTags;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Fillable([
@@ -123,7 +125,33 @@ class Ticket extends Model
         return $this->morphMany(Comment::class, 'commentable');
     }
 
-    // helpers
+    public function watchers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'ticket_watchers', 'ticket_id', 'user_id')
+            ->using(TicketWatcher::class)
+            ->withPivot('created_at');
+    }
+
+    public function conversionHistories(): HasMany
+    {
+        return $this->hasMany(ConversionHistory::class, 'source_ticket_id');
+    }
+
+    public function mergedTickets(): BelongsToMany
+    {
+        return $this->belongsToMany(Ticket::class, 'merged_tickets', 'parent_ticket_id', 'merged_ticket_id')
+        ->using(MergedTicket::class)
+        ->withPivot(['merged_by', 'merged_at']);
+    }
+    
+    public function mergedInto(): BelongsToMany
+    {
+        return $this->belongsToMany(Ticket::class, 'merged_tickets', 'merged_ticket_id', 'parent_ticket_id')
+        ->using(MergedTicket::class)
+        ->withPivot(['merged_by', 'merged_at']);
+    }
+
+    // Helpers
     public function isConverted(): bool
     {
         return $this->status === TicketStatus::Converted;
@@ -152,5 +180,25 @@ class Ticket extends Model
             ConversionTypes::FeatureRequest => route('feature-request.show', $this->converted_to_id),
             default => null
         };
+    }
+
+    public function isWatchedBy(int $userId): bool
+    {
+        return $this->watchers()->where('users.id', $userId)->exists();
+    }
+
+    public function watchersCount(): int
+    {
+        return $this->watchers()->count();
+    }
+
+    public function isMerged(): bool
+    {
+        return $this->mergedInto()->exists();
+    }
+
+    public function hasMergedTickets(): bool
+    {
+        return $this->mergedTickets()->exists();
     }
 }

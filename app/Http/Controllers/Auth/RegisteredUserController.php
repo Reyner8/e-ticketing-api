@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Auth;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\StoreUserRequest;
+use App\Http\Resources\User\UserResourceDetail;
 use App\Models\User;
-use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 
 class RegisteredUserController extends Controller
@@ -21,7 +21,7 @@ class RegisteredUserController extends Controller
         $user = User::create($request->validated());
 
         return ApiResponse::success(
-            new UserResource($user),
+            new UserResourceDetail($user),
             'User created successfully'
         );
     }
