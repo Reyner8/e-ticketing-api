@@ -29,8 +29,8 @@ enum ErrorReportStatus: string
     public static function assignableStatuses(): array
     {
         return [
-            self::PendingApproval->value,
-            self::InProgress->value,
+            self::PendingApproval,
+            self::InProgress,
         ];
     }
 
