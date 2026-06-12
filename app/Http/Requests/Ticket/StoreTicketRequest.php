@@ -36,17 +36,13 @@ class StoreTicketRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['required', 'string'],
             'category' => ['required', 'string', Rule::in(TicketCategory::values())],  
             'priority' => ['required', 'string', Rule::in(Priorities::values())], 
-            'assigned_to_id' => 'nullable|integer|exists:users,id',
-            'assigned_team' => ['nullable', 'string', 'max:255', Rule::in(AssignedTeam::values())],
-            'due_date' => 'nullable|date',
-            'response_time' => 'nullable|numeric|decimal:0,2',
-            'resolution_time' => 'nullable|numeric|decimal:0,2',
-            'estimated_effort' => 'nullable|numeric|decimal:0,2',
-            'parent_ticket_id' => 'nullable|string|exists:tickets,id',
+            'due_date' => ['nullable', 'date', 'after:now'],
+            'estimated_effort' => ['nullable', 'numeric', 'min:0'],
+            'parent_ticket_id' => ['nullable', 'string', Rule::exists('tickets', 'id')],
         ];
     }
 }

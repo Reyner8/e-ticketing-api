@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('tickets', function (Blueprint $table) {
-            $table->timestamp('assignment_date')->nullable()->after('approval_date');
+            $table->timestamp('assignment_date')->nullable()->after('assigned_to_id');
         });
     }
 

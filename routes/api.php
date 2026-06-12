@@ -4,7 +4,6 @@ use App\Http\Controllers\Api\v1\ActivityLogController;
 use App\Http\Controllers\Api\v1\ApprovalController;
 use App\Http\Controllers\Api\v1\Assignment\ErrorReportAssignmentController;
 use App\Http\Controllers\Api\v1\Assignment\FeatureRequestAssignmentController;
-use App\Http\Controllers\Api\v1\Assignment\TicketAssignmentController;
 use App\Http\Controllers\Api\v1\Attachment\CommentAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\ErrorReportAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\FeatureRequestAttachmentController;

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TicketStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,11 +14,11 @@ return new class extends Migration
       {
             Schema::create('tickets', function (Blueprint $table) {
                   $table->string('id')->primary();
-                  $table->string('title');
+                  $table->string('title', 200);
                   $table->text('description');
-                  $table->string('category');
-                  $table->string('priority');
-                  $table->string('status');
+                  $table->string('category', 50);
+                  $table->string('priority', 50);
+                  $table->string('status', 50)->default(TicketStatus::Draft->value);
                   $table->foreignId('reporter_id')
                         ->constrained('users')
                         ->onUpdate('cascade')
@@ -27,22 +28,22 @@ return new class extends Migration
                         ->constrained('users')
                         ->onUpdate('cascade')
                         ->onDelete('cascade');
-                  $table->string('assigned_team')->nullable();
-                  $table->timestamp('date_reported');
+                  $table->string('assigned_team', 50)->nullable();
+                  $table->timestamp('date_reported')->useCurrent();
                   $table->timestamp('due_date')->nullable();
                   $table->timestamp('resolved_date')->nullable();
                   $table->timestamp('closed_date')->nullable();
                   $table->boolean('sla_breached')->default(false);
-                  $table->decimal('response_time')->nullable();
-                  $table->decimal('resolution_time')->nullable();
-                  $table->decimal('estimated_effort')->nullable();
-                  $table->decimal('actual_effort')->nullable();
+                  $table->decimal('response_time', 10, 2)->nullable();
+                  $table->decimal('resolution_time', 10, 2)->nullable();
+                  $table->decimal('estimated_effort', 10, 2)->nullable();
+                  $table->decimal('actual_effort', 10, 2)->nullable();
                   $table->string('parent_ticket_id')->nullable();
                   $table->foreign('parent_ticket_id')
                         ->references('id')
                         ->on('tickets')
                         ->nullOnDelete();
-                  $table->string('converted_to_type')->nullable();
+                  $table->string('converted_to_type', 50)->nullable();
                   $table->string('converted_to_id')->nullable();
                   $table->timestamp('converted_at')->nullable();
                   $table->foreignId('converted_by')
@@ -52,6 +53,16 @@ return new class extends Migration
                         ->onDelete('cascade');
                   $table->text('conversion_reason')->nullable();
                   $table->timestamps();
+
+                  // Index
+                  $table->index('category');
+                  $table->index('priority');
+                  $table->index('status');
+                  $table->index('reporter_id');
+                  $table->index('assigned_to_id');
+                  $table->index('date_reported');
+                  $table->index('sla_breached');
+                  $table->index('converted_to_type');
             });
       }
 

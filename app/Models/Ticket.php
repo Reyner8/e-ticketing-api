@@ -9,6 +9,7 @@ use App\Enums\Priorities;
 use App\Enums\TicketCategory;
 use App\Enums\TicketStatus;
 use App\Observers\TicketObserver;
+use App\Policies\TicketPolicy;
 use App\Traits\HasActivityLog;
 use App\Traits\HasApproval;
 use App\Traits\HasAssignment;
@@ -18,10 +19,14 @@ use App\Traits\HasStatusHistory;
 use App\Traits\HasTags;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use tidy;
 
 #[Fillable([
     'id',
@@ -56,6 +61,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 ])]
 
 #[ObservedBy([TicketObserver::class])]
+#[UsePolicy(TicketPolicy::class)]
 
 class Ticket extends Model
 {
@@ -78,46 +84,36 @@ class Ticket extends Model
         'closed_date' => 'datetime',
         'converted_at' => 'datetime',
         'sla_breached' => 'boolean',
-        'response_time' => 'integer',
-        'resolution_time' => 'integer',
-        'estimated_effort' => 'integer',
-        'actual_effort' => 'integer',
+        'response_time' => 'decimal:2',
+        'resolution_time' => 'decimal:2',
+        'estimated_effort' => 'decimal:2',
+        'actual_effort' => 'decimal:2',
     ];
 
     // Relations
-    public function reporter()
+    public function reporter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reporter_id');
     }
 
-    public function assignee()
+    public function assignedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to_id');
     }
 
-    public function convertedBy()
+    public function converter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'converted_by');
     }
 
-    public function parentTicket()
+    public function parentTicket(): BelongsTo
     {
         return $this->belongsTo(Ticket::class, 'parent_ticket_id', 'id');
     }
 
-    public function childTickets()
+    public function childTickets(): HasMany
     {
         return $this->hasMany(Ticket::class, 'parent_ticket_id', 'id');
-    }
-
-    public function featureRequest()
-    {
-        return $this->hasOne(FeatureRequest::class, 'source_ticket_id');
-    }
-
-    public function errorReport()
-    {
-        return $this->hasOne(ErrorReport::class, 'source_ticket_id');
     }
 
     public function comments(): MorphMany
@@ -140,35 +136,58 @@ class Ticket extends Model
     public function mergedTickets(): BelongsToMany
     {
         return $this->belongsToMany(Ticket::class, 'merged_tickets', 'parent_ticket_id', 'merged_ticket_id')
-        ->using(MergedTicket::class)
-        ->withPivot(['merged_by', 'merged_at']);
+            ->using(MergedTicket::class)
+            ->withPivot(['merged_by', 'merged_at']);
     }
-    
+
     public function mergedInto(): BelongsToMany
     {
         return $this->belongsToMany(Ticket::class, 'merged_tickets', 'merged_ticket_id', 'parent_ticket_id')
-        ->using(MergedTicket::class)
-        ->withPivot(['merged_by', 'merged_at']);
+            ->using(MergedTicket::class)
+            ->withPivot(['merged_by', 'merged_at']);
     }
 
     // Helpers
     public function isConverted(): bool
     {
-        return $this->status === TicketStatus::Converted;
+        return ! is_null($this->converted_to_id);
+    }
+
+    public function canBeConverted(): bool
+    {
+        $allowedStatuses = [
+            TicketStatus::Draft->value,
+            TicketStatus::PendingApproval->value,
+            TicketStatus::Assigned->value,
+            TicketStatus::InProgress->value,
+            TicketStatus::WaitingForUser->value
+        ];
+
+        $currentStatus = $this->status->value;
+
+        return in_array($currentStatus, $allowedStatuses);
+    }
+
+    public function isAssignedToUser(): bool
+    {
+        return ! is_null($this->assigned_to_id);
+    }
+
+    public function isAssignedToTeam(): bool
+    {
+        return ! is_null($this->assigned_team);
+    }
+
+    public function isAssignable(): bool
+    {
+        $currentStatus = $this->status->value;
+
+        return in_array($currentStatus, TicketStatus::assignableStatuses());
     }
 
     public function isApproved(): bool
     {
         return $this->approval_status === ApprovalStatus::Approved;
-    }
-
-    public function canBeConverted(): bool
-    {
-        return in_array(
-            $this->status,
-            TicketStatus::assignableStatuses(),
-            true
-        ) && $this->isApproved();
     }
 
     public function convertedUrl()
@@ -200,5 +219,33 @@ class Ticket extends Model
     public function hasMergedTickets(): bool
     {
         return $this->mergedTickets()->exists();
+    }
+
+    // Scopes
+    public function scopeByStatus(Builder $query, string $status): Builder
+    {
+        return $query->where('status', $status);
+    }
+
+    public function scopeByPriority(Builder $query, string $priority): Builder
+    {
+        return $query->where('priority', $priority);
+    }
+
+    public function scopeByCategory(Builder $query, string $category): Builder
+    {
+        return $query->where('category', $category);
+    }
+
+    public function scopeBySlaBreached(Builder $query): Builder
+    {
+        return $query->where('sla_breached', true);
+    }
+
+    public function scopeByOverdue(Builder $query): Builder
+    {
+        return $query->whereNotNull('due_date')
+            ->where('due_date', '<', now())
+            ->whereNotIn(['closed', 'resolved', 'converted']);
     }
 }

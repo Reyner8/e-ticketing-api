@@ -19,6 +19,16 @@ enum Priorities: string
         };
     }
 
+    public function slaHours(): int
+    {
+        return match ($this) {
+            self::Critical => 4,
+            self::High => 8,
+            self::Medium => 24,
+            self::Low => 72
+        };
+    }
+
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

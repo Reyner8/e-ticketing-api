@@ -18,6 +18,7 @@ class TicketObserver
     {
         $this->logService->logCreated($ticket, [
             'title' => $ticket->title,
+            'category' => $ticket->category,
             'priority' => $ticket->priority,
             'status' => $ticket->status,
         ]);

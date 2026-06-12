@@ -35,19 +35,11 @@ enum TicketStatus: string
     public static function assignableStatuses(): array
     {
         return [
-            self::PendingApproval,
-            self::Assigned,
-            self::InProgress,
-            self::WaitingForUser,
+            self::Draft->value,
+            self::PendingApproval->value,
+            self::Assigned->value,
+            self::InProgress->value,
+            self::WaitingForUser->value,
         ];
-    }
-
-    public function isFinal(): bool
-    {
-        return in_array($this, [
-            self::Resolved,
-            self::Closed,
-            self::Converted,
-        ], true);
     }
 }

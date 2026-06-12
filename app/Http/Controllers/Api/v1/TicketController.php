@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Enums\UserRole;
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ticket\StoreTicketRequest;
@@ -10,48 +11,53 @@ use App\Models\Ticket;
 use App\Http\Resources\TicketDetailResource;
 use App\Http\Resources\TicketResource;
 use App\Services\TicketService;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class TicketController extends Controller
 {
+    public function __construct(
+        private readonly TicketService $service
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
-
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $tickets = Ticket::with(['reporter', 'assignee'])
-            ->latest()
-            ->paginate(10);
+        $tickets = $this->service->getAll(
+            filters: $request->only([
+                'status',
+                'priority',
+                'category',
+                'assigned_team',
+                'reporter_id',
+                'sla_breached',
+                'overdue',
+                'tags',
+                'search'
+            ]),
+            perPage: $request->integer('per_page', 15)
+        );
+
         return ApiResponse::paginated(
             $tickets,
             TicketResource::collection($tickets),
-            'Tickets retrieved successfully'
+            'Tickets retrieved successfully.',
         );
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function __construct(private TicketService $service) {}
-
     public function store(StoreTicketRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $data['id'] = $this->service->generateTicketId();
-
-        $ticket = Ticket::create([
-            ...$data,
-            'reporter_id' => Auth::id(),
-            'status' => 'pending_approval',
-            'date_reported' => Carbon::now(),
-        ]);
+        $ticket = $this->service->store($request->validated());
 
         return ApiResponse::success(
             new TicketDetailResource($ticket),
-            'Ticket Created Successfully',
+            'Ticket created successfully.',
             201
         );
     }
@@ -61,10 +67,14 @@ class TicketController extends Controller
      */
     public function show(Ticket $ticket): JsonResponse
     {
-        $ticket->load(['reporter', 'assignee']);
+        $user = Auth::user();
+
+        if ($user->role === UserRole::Reporter && $ticket->reporter_id !== $user->id) {
+            abort(403, 'You are not authorized to view this ticket.');
+        }
 
         return ApiResponse::success(
-            new TicketDetailResource($ticket),
+            new TicketDetailResource($ticket->load(['reporter', 'assignedUser', 'tags'])),
             'Ticket retrieved successfully'
         );
     }
@@ -74,10 +84,10 @@ class TicketController extends Controller
      */
     public function update(UpdateTicketRequest $request, Ticket $ticket): JsonResponse
     {
-        $ticket->update($request->validated());
+        $updated = $this->service->update($ticket, $request->validated());
 
         return ApiResponse::success(
-            new TicketDetailResource($ticket),
+            new TicketDetailResource($updated),
             'Ticket updated successfully'
         );
     }
@@ -87,7 +97,7 @@ class TicketController extends Controller
      */
     public function destroy(Ticket $ticket): JsonResponse
     {
-        $ticket->delete();
+        $this->service->delete($ticket);
 
         return ApiResponse::success(
             null,

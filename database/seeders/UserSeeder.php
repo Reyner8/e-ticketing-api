@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Faker\Factory as FakerFactory;
 use App\Models\User;
 
 class UserSeeder extends Seeder
@@ -13,25 +12,40 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        $faker = FakerFactory::create('id_ID');
-        for ($i = 0; $i < 10; $i++) {
-            User::create([
-                'name' => $faker->name,
-                'email' => $faker->unique()->safeEmail,
-                'password' => bcrypt('password'),
-                'role' => $faker->randomElement(['admin', 'team_lead', 'it_staff', 'reporter']),
-                'team' => $faker->randomElement(['programmer', 'network', 'hardware']),
-                'avatar' => $faker->imageUrl(100, 100, 'people'),
-                'is_active' => $faker->boolean,
-                'last_login' => $faker->dateTimeBetween('-1 month', 'now'),
-                'created_at' => now(),
-                'pref_dark_mode' => $faker->boolean,
-                'pref_email_notifications' => $faker->boolean,
-                'pref_sla_alerts' => $faker->boolean,
-                'pref_downtime_alerts' => $faker->boolean,
-                'pref_digest_frequency' => $faker->randomElement(['immediate', 'hourly', 'daily', 'weekly']),
-                'pref_quiet_hours' => $faker->optional()->time('H:i') . '-' . $faker->optional()->time('H:i'),
-            ]);
+        $users = [
+            [
+                'name' => 'Anton',
+                'username' => 'anton',
+                'email' => 'anton@example.com',
+                'password' => bcrypt('12345678'),
+                'role' => 'admin',
+            ],
+            [
+                'name' => 'Rusdi',
+                'username' => 'rusdi',
+                'email' => 'rusdi@example.com',
+                'password' => bcrypt('12345678'),
+                'role' => 'team_lead',
+            ],
+            [
+                'name' => 'Amba',
+                'username' => 'amba',
+                'email' => 'amba@example.com',
+                'password' => bcrypt('12345678'),
+                'role' => 'it_staff',
+                'team' => 'programmer'
+            ],
+            [
+                'name' => 'Gatot',
+                'username' => 'gatot',
+                'email' => 'gatot@example.com',
+                'password' => bcrypt('12345678'),
+                'role' => 'admin',
+            ]
+        ];
+
+        foreach ($users as $user) {
+            User::create($user);
         }
     }
 }
