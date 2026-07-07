@@ -229,11 +229,16 @@ class AssignmentService
     // Private
     private function guardNotAssignable(Model $resource): void
     {
-        $currentStatus = $resource->status->value;
+        $currentStatus = $resource->status instanceof BackedEnum
+            ? $resource->status->value
+            : $resource->status;
 
-        $allowedStatuses = $this->resolveAssignableStatus($resource);
+        $assignableStatuses = array_map(
+            fn ($status) => $status instanceof BackedEnum ? $status->value : $status,
+            $this->resolveAssignableStatus($resource)
+        );
 
-        if (in_array($currentStatus, $allowedStatuses)) {
+        if (! in_array($currentStatus, $assignableStatuses, true)) {
             throw ValidationException::withMessages([
                 'status' => [
                     "Resource with status '{$currentStatus}' cannot be assigned."
