@@ -53,6 +53,11 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'converted_at',
     'converted_by',
     'conversion_reason',
+    'is_public_submission',
+    'submitter_name',
+    'submitter_email',
+    'submitter_phone',
+    'submitter_unit',
 ])]
 
 #[ObservedBy([TicketObserver::class])]
@@ -77,6 +82,7 @@ class Ticket extends Model
         'closed_date' => 'datetime',
         'converted_at' => 'datetime',
         'sla_breached' => 'boolean',
+        'is_public_submission' => 'boolean',
         'response_time' => 'decimal:2',
         'resolution_time' => 'decimal:2',
         'estimated_effort' => 'decimal:2',
