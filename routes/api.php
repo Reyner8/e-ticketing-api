@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\v1\DowntimeRecordController;
 use App\Http\Controllers\Api\v1\ErrorReportController;
 use App\Http\Controllers\Api\v1\MilestoneController;
 use App\Http\Controllers\Api\v1\NotificationController;
+use App\Http\Controllers\Api\v1\PublicSubmissionController;
 use App\Http\Controllers\Api\v1\StatusHistory\ErrorReportStatusHistoryController;
 use App\Http\Controllers\Api\v1\StatusHistory\FeatureRequestStatusHistoryController;
 use App\Http\Controllers\Api\v1\StatusHistory\TicketStatusHistoryController;
@@ -37,6 +38,10 @@ use App\Http\Controllers\Api\v1\UserController;
 
 Route::prefix('v1')->group(function () {
     require __DIR__ . '/auth.php';
+
+    Route::middleware(['public.api_key', 'throttle:public-submissions'])
+        ->post('/public/submit', [PublicSubmissionController::class, 'store'])
+        ->name('public.submit');
 
     Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
         Route::get('/user', function (Request $request) {
