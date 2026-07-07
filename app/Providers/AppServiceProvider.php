@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,6 +34,13 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('api', function () {
             return Limit::perMinute(60);
+        });
+
+        RateLimiter::for('public-submissions', function (Request $request) {
+            return [
+                Limit::perMinute(10)->by($request->ip()),
+                Limit::perHour(30)->by($request->ip()),
+            ];
         });
 
         Relation::morphMap([
