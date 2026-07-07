@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Api\v1\Assignment;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Ticket\AssignTeamRequest;
 use App\Http\Requests\Ticket\AssignUserRequest;
+use App\Models\Ticket;
 use App\Services\Ticket\AssignmentService;
 use App\Traits\HandleAssignment;
 use Illuminate\Http\JsonResponse;
-use App\Models\Ticket;
 
 class TicketAssignmentController extends Controller
 {

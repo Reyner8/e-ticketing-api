@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\v1\ActivityLogController;
 use App\Http\Controllers\Api\v1\ApprovalController;
 use App\Http\Controllers\Api\v1\Assignment\ErrorReportAssignmentController;
 use App\Http\Controllers\Api\v1\Assignment\FeatureRequestAssignmentController;
+use App\Http\Controllers\Api\v1\Assignment\TicketAssignmentController;
 use App\Http\Controllers\Api\v1\Attachment\CommentAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\ErrorReportAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\FeatureRequestAttachmentController;
@@ -14,7 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\TicketController;
 use App\Http\Controllers\Api\v1\FeatureController;
-use App\Http\Controllers\Api\v1\TIcketConversionController;
+use App\Http\Controllers\Api\v1\TicketConversionController;
 use App\Http\Controllers\Api\v1\Comment\TicketCommentController;
 use App\Http\Controllers\Api\v1\Comment\FeatureRequestCommentController;
 use App\Http\Controllers\Api\v1\Comment\ErrorReportCommentController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\Api\v1\ConversionHistoryController;
 use App\Http\Controllers\Api\v1\DowntimeAffectedSystemController;
 use App\Http\Controllers\Api\v1\DowntimeRecordController;
 use App\Http\Controllers\Api\v1\ErrorReportController;
+use App\Http\Controllers\Api\v1\ExportController;
 use App\Http\Controllers\Api\v1\MilestoneController;
 use App\Http\Controllers\Api\v1\NotificationController;
 use App\Http\Controllers\Api\v1\PublicSubmissionController;
@@ -123,6 +125,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/conversion-history/{history}', [ConversionHistoryController::class, 'show']);
             Route::get('/tickets/{ticket}/conversion-history', [ConversionHistoryController::class, 'byTicket']);
 
+            //global activity feed
+            Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+
             //merge ticket routes
             Route::get('/tickets/{ticket}/merge', [MergedTicketController::class, 'index']);
 
@@ -163,6 +168,12 @@ Route::prefix('v1')->group(function () {
             Route::post('/errors/{error}/assign/team', [ErrorReportAssignmentController::class, 'assignTeam']);
             Route::post('/errors/{error}/unassign/user', [ErrorReportAssignmentController::class, 'unassignUser']);
             Route::post('/errors/{error}/unassign/team', [ErrorReportAssignmentController::class, 'unassignTeam']);
+
+            //ticket assignment routes
+            Route::post('/tickets/{ticket}/assign/user', [TicketAssignmentController::class, 'assignUser']);
+            Route::post('/tickets/{ticket}/assign/team', [TicketAssignmentController::class, 'assignTeam']);
+            Route::post('/tickets/{ticket}/unassign/user', [TicketAssignmentController::class, 'unassignUser']);
+            Route::post('/tickets/{ticket}/unassign/team', [TicketAssignmentController::class, 'unassignTeam']);
         });
 
         Route::middleware('role:it_staff')->group(function () {
@@ -258,6 +269,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/team-workload/{team}/history', [TeamWorkloadSnapshotController::class, 'history']);
             Route::get('/team-workload/{snapshot}', [TeamWorkloadSnapshotController::class, 'show']);
             Route::post('/team-workload/generate', [TeamWorkloadSnapshotController::class, 'generate']);
+
+            //export routes
+            Route::get('/exports/{dataset}', [ExportController::class, 'csv'])
+                ->where('dataset', 'tickets|errors|features|downtimes|users');
         });
     });
 });
