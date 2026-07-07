@@ -153,4 +153,16 @@ class ActivityLogService
         ->latest('performed_at')
         ->paginate(min($perPage, 50));
     }
+
+    public function getRecent(int $perPage = 20, ?string $action = null): LengthAwarePaginator
+    {
+        return ActivityLog::query()
+            ->with([
+                'performer:id,name,username',
+                'targetUser:id,name,username',
+            ])
+            ->when($action, fn ($q) => $q->where('action', $action))
+            ->latest('performed_at')
+            ->paginate(min($perPage, 50));
+    }
 }

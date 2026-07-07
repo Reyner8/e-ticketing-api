@@ -39,8 +39,8 @@ class ActivityLogResource extends JsonResource
 
             'performed_at' => $this->performed_at->format('Y-m-d H:i:s'),
             'loggable' => [
-                'id' => $this->loggable_type,
-                'type' => $this->loggable_type,
+                'id' => $this->loggable_id,
+                'type' => class_basename($this->loggable_type),
             ],
         ];
     }

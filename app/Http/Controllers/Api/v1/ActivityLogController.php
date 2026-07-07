@@ -34,6 +34,20 @@ class ActivityLogController extends Controller
         return $this->getActivityLogs($request, $feature);
     }
 
+    public function index(Request $request): JsonResponse
+    {
+        $logs = $this->logService->getRecent(
+            perPage: $request->integer('per_page', 20),
+            action: $request->string('action')->value() ?: null
+        );
+
+        return ApiResponse::paginated(
+            $logs,
+            ActivityLogResource::collection($logs),
+            'Recent activity retrieved successfully'
+        );
+    }
+
     // private
     private function getActivityLogs(Request $request, Model $loggable): JsonResponse
     {
