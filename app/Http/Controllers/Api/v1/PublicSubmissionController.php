@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PublicSubmission\StorePublicSubmissionRequest;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\Attachment\AttachmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,15 +17,20 @@ use Illuminate\Support\Str;
 
 class PublicSubmissionController extends Controller
 {
+    public function __construct(
+        private readonly AttachmentService $attachmentService
+    ) {}
+
     public function store(StorePublicSubmissionRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $files = $request->file('files', []);
         $reporter = $this->getSystemReporter();
 
         Auth::onceUsingId($reporter->id);
 
-        $ticket = DB::transaction(function () use ($data, $reporter) {
-            return Ticket::create([
+        $ticket = DB::transaction(function () use ($data, $reporter, $files) {
+            $ticket = Ticket::create([
                 'id' => $this->generateTicketId(),
                 'title' => $data['title'],
                 'description' => $this->composeDescription($data),
@@ -39,6 +45,12 @@ class PublicSubmissionController extends Controller
                 'submitter_phone' => $data['submitter_phone'] ?? null,
                 'submitter_unit' => $data['submitter_unit'] ?? null,
             ]);
+
+            foreach ($files as $file) {
+                $this->attachmentService->upload($file, $ticket, $reporter->id);
+            }
+
+            return $ticket;
         });
 
         return ApiResponse::success(
