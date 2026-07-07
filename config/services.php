@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'public_submission' => [
+        'api_key' => env('PUBLIC_SUBMISSION_API_KEY'),
+        'system_reporter_email' => env('PUBLIC_SUBMISSION_SYSTEM_EMAIL', 'public@system.local'),
+    ],
+
 ];
