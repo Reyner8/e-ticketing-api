@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\v1\Comment\FeatureRequestCommentController;
 use App\Http\Controllers\Api\v1\Comment\ErrorReportCommentController;
 use App\Http\Controllers\Api\v1\ConversionHistoryController;
 use App\Http\Controllers\Api\v1\DowntimeAffectedSystemController;
+use App\Http\Controllers\Api\v1\DashboardController;
 use App\Http\Controllers\Api\v1\DowntimeRecordController;
 use App\Http\Controllers\Api\v1\ErrorReportController;
 use App\Http\Controllers\Api\v1\ExportController;
@@ -127,6 +128,11 @@ Route::prefix('v1')->group(function () {
 
             //global activity feed
             Route::get('/activity-logs', [ActivityLogController::class, 'index']);
+
+            //dashboard & export routes
+            Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
+            Route::get('/exports/{dataset}', [ExportController::class, 'export'])
+                ->where('dataset', 'tickets|errors|features|downtimes|users');
 
             //merge ticket routes
             Route::get('/tickets/{ticket}/merge', [MergedTicketController::class, 'index']);
@@ -269,10 +275,6 @@ Route::prefix('v1')->group(function () {
             Route::get('/team-workload/{team}/history', [TeamWorkloadSnapshotController::class, 'history']);
             Route::get('/team-workload/{snapshot}', [TeamWorkloadSnapshotController::class, 'show']);
             Route::post('/team-workload/generate', [TeamWorkloadSnapshotController::class, 'generate']);
-
-            //export routes
-            Route::get('/exports/{dataset}', [ExportController::class, 'csv'])
-                ->where('dataset', 'tickets|errors|features|downtimes|users');
         });
     });
 });
