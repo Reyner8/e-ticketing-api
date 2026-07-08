@@ -21,6 +21,9 @@ class FeatureDetailResource extends JsonResource
             'request_type' => $this->request_type,
             'priority' => $this->priority,
             'status' => $this->status,
+            'approval_status' => $this->approval_status instanceof \App\Enums\ApprovalStatus
+                ? $this->approval_status->value
+                : $this->approval_status,
             'progress' => $this->progress,
             'reporter_id' =>$this->reporter_id,
             'assigned_to_id' =>$this->assigned_to_id,

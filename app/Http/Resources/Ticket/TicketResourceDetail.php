@@ -22,6 +22,13 @@ class TicketResourceDetail extends JsonResource
             'category' => $this->category->value,
             'priority' => $this->priority->value,
             'status' => $this->status->value,
+            'approval' => [
+                'status' => $this->approval_status instanceof \App\Enums\ApprovalStatus
+                    ? $this->approval_status->value
+                    : ($this->approval_status ?? 'pending'),
+                'processed_at' => $this->approval_date?->format('Y-m-d H:i:s'),
+                'rejection_reason' => $this->rejection_reason,
+            ],
             'reporter' => $this->reporter ? [
                 'id' => $this->reporter->id,
                 'name' => $this->reporter->name,
