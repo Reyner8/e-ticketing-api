@@ -58,6 +58,10 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'submitter_email',
     'submitter_phone',
     'submitter_unit',
+    'approval_status',
+    'approved_by',
+    'approval_date',
+    'rejection_reason',
 ])]
 
 #[ObservedBy([TicketObserver::class])]
@@ -83,6 +87,8 @@ class Ticket extends Model
         'converted_at' => 'datetime',
         'sla_breached' => 'boolean',
         'is_public_submission' => 'boolean',
+        'approval_status' => ApprovalStatus::class,
+        'approval_date' => 'datetime',
         'response_time' => 'decimal:2',
         'resolution_time' => 'decimal:2',
         'estimated_effort' => 'decimal:2',
@@ -184,9 +190,14 @@ class Ticket extends Model
         return in_array($currentStatus, TicketStatus::assignableStatuses());
     }
 
-    public function isApproved(): bool
+    public function isApprovable(): bool
     {
-        return $this->approval_status === ApprovalStatus::Approved;
+        if ($this->isPending()) {
+            return true;
+        }
+
+        return $this->status === TicketStatus::PendingApproval
+            && ($this->approval_status === null || $this->approval_status === ApprovalStatus::Pending);
     }
 
     public function convertedUrl()

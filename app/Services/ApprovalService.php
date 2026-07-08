@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\ActivityAction;
+use App\Enums\TicketStatus;
+use App\Models\Ticket;
 use App\Services\Log\ActivityLogService;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\ApprovalStatus;
@@ -30,11 +32,18 @@ class ApprovalService
         $this->guardNotApprovable($resource);
 
         DB::transaction(function () use ($resource) {
-            $resource->update([
+            $updates = [
                 'approval_status' => ApprovalStatus::Approved->value,
                 'approved_by' => Auth::id(),
                 'approval_date' => Carbon::now(),
-            ]);
+                'rejection_reason' => null,
+            ];
+
+            if ($resource instanceof Ticket) {
+                $updates['status'] = TicketStatus::Assigned->value;
+            }
+
+            $resource->update($updates);
 
             // log
             $this->logService->log(
@@ -65,11 +74,19 @@ class ApprovalService
         $this->guardNotApprovable($resource);
 
         DB::transaction(function () use ($resource, $reason) {
-            $resource->update([
+            $updates = [
                 'approval_status' => ApprovalStatus::Rejected->value,
                 'approved_by' => Auth::id(),
-                'approval_date' => Carbon::now()
-            ]);
+                'approval_date' => Carbon::now(),
+                'rejection_reason' => $reason,
+            ];
+
+            if ($resource instanceof Ticket) {
+                $updates['status'] = TicketStatus::Closed->value;
+                $updates['closed_date'] = Carbon::now();
+            }
+
+            $resource->update($updates);
 
             // log
             $this->logService->log(

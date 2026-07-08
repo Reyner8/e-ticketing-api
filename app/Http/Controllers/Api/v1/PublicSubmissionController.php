@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Enums\ApprovalStatus;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
 use App\Helpers\ApiResponse;
@@ -37,6 +38,7 @@ class PublicSubmissionController extends Controller
                 'category' => $data['category'],
                 'priority' => $data['priority'],
                 'status' => TicketStatus::PendingApproval->value,
+                'approval_status' => ApprovalStatus::Pending->value,
                 'reporter_id' => $reporter->id,
                 'date_reported' => now(),
                 'is_public_submission' => true,
