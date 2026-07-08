@@ -3,7 +3,11 @@
 namespace App\Services;
 
 use App\Enums\ActivityAction;
+use App\Enums\ErrorReportStatus;
+use App\Enums\FeatureRequestStatus;
 use App\Enums\TicketStatus;
+use App\Models\ErrorReport;
+use App\Models\FeatureRequest;
 use App\Models\Ticket;
 use App\Services\Log\ActivityLogService;
 use Illuminate\Database\Eloquent\Model;
@@ -41,6 +45,14 @@ class ApprovalService
 
             if ($resource instanceof Ticket) {
                 $updates['status'] = TicketStatus::Assigned->value;
+            }
+
+            if ($resource instanceof FeatureRequest) {
+                $updates['status'] = FeatureRequestStatus::Approved->value;
+            }
+
+            if ($resource instanceof ErrorReport) {
+                $updates['status'] = ErrorReportStatus::Assigned->value;
             }
 
             $resource->update($updates);
@@ -84,6 +96,10 @@ class ApprovalService
             if ($resource instanceof Ticket) {
                 $updates['status'] = TicketStatus::Closed->value;
                 $updates['closed_date'] = Carbon::now();
+            }
+
+            if ($resource instanceof FeatureRequest) {
+                $updates['status'] = FeatureRequestStatus::Rejected->value;
             }
 
             $resource->update($updates);

@@ -47,6 +47,10 @@ use Override;
     'sla_breached',
     'source_ticket_id',
     'is_direct_input',
+    'approval_status',
+    'approved_by',
+    'approval_date',
+    'rejection_reason',
 ])]
 
 #[ObservedBy([ErrorReportObserver::class])]
@@ -72,6 +76,8 @@ class ErrorReport extends Model
         'actual_effort' => 'decimal:2',
         'sla_time_elapsed' => 'decimal:2',
         'sla_time_remaining' => 'decimal:2',
+        'approval_status' => ApprovalStatus::class,
+        'approval_date' => 'datetime',
     ];
 
     // Relations
@@ -121,6 +127,16 @@ class ErrorReport extends Model
     public function isFromTicket(): bool
     {
         return ! is_null($this->source_ticket_id);
+    }
+
+    public function isApprovable(): bool
+    {
+        if ($this->isPending()) {
+            return true;
+        }
+
+        return $this->status === ErrorReportStatus::PendingApproval
+            && ($this->approval_status === null || $this->approval_status === ApprovalStatus::Pending);
     }
 
     // Scopes
