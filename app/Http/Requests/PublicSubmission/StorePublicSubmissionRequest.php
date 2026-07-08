@@ -36,6 +36,7 @@ class StorePublicSubmissionRequest extends FormRequest
             'submitter_unit' => ['nullable', 'string', 'max:100'],
             'files' => ['nullable', 'array', 'max:5'],
             'files.*' => ['file', 'max:10240', 'mimes:jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx,txt,zip'],
+            'website' => ['prohibited'],
         ];
     }
 }
