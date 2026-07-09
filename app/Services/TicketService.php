@@ -91,6 +91,13 @@ class TicketService
                 isset($filters['search']),
                 fn($q) => $q->where('title', 'like', '%' . $filters['search'] . '%')
             )
+            ->when(
+                isset($filters['is_public_submission']),
+                fn($q) => $q->where(
+                    'is_public_submission',
+                    filter_var($filters['is_public_submission'], FILTER_VALIDATE_BOOLEAN)
+                )
+            )
             ->latest('date_reported')
             ->paginate(min($perPage, 50));
     }

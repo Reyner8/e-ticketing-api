@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Enums\ApprovalStatus;
+use App\Enums\Priorities;
+use App\Enums\TicketCategory;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
 use App\Helpers\ApiResponse;
@@ -34,18 +36,18 @@ class PublicSubmissionController extends Controller
             $ticket = Ticket::create([
                 'id' => $this->generateTicketId(),
                 'title' => $data['title'],
-                'description' => $this->composeDescription($data),
-                'category' => $data['category'],
-                'priority' => $data['priority'],
+                'description' => $data['description'],
+                'category' => TicketCategory::GeneralReport->value,
+                'priority' => Priorities::Medium->value,
                 'status' => TicketStatus::PendingApproval->value,
                 'approval_status' => ApprovalStatus::Pending->value,
                 'reporter_id' => $reporter->id,
                 'date_reported' => now(),
                 'is_public_submission' => true,
                 'submitter_name' => $data['submitter_name'],
-                'submitter_email' => $data['submitter_email'],
-                'submitter_phone' => $data['submitter_phone'] ?? null,
-                'submitter_unit' => $data['submitter_unit'] ?? null,
+                'submitter_email' => null,
+                'submitter_phone' => null,
+                'submitter_unit' => $data['submitter_unit'],
             ]);
 
             foreach ($files as $file) {
@@ -58,27 +60,12 @@ class PublicSubmissionController extends Controller
         return ApiResponse::success(
             [
                 'reference_number' => $ticket->id,
-                'submission_type' => $data['submission_type'],
                 'status' => $ticket->status->value,
                 'submitted_at' => $ticket->date_reported->toIso8601String(),
             ],
-            'Submission received. Our IT team will follow up shortly.',
+            'Laporan diterima. Tim IT akan meninjau dan menindaklanjuti.',
             201
         );
-    }
-
-    private function composeDescription(array $data): string
-    {
-        $header = sprintf(
-            "[Public Submission - %s]\nName: %s\nEmail: %s\nPhone: %s\nUnit: %s\n\n",
-            strtoupper(str_replace('_', ' ', $data['submission_type'])),
-            $data['submitter_name'],
-            $data['submitter_email'],
-            $data['submitter_phone'] ?? '-',
-            $data['submitter_unit'] ?? '-'
-        );
-
-        return $header . $data['description'];
     }
 
     private function getSystemReporter(): User

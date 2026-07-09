@@ -36,7 +36,8 @@ class TicketController extends Controller
                 'sla_breached',
                 'overdue',
                 'tags',
-                'search'
+                'search',
+                'is_public_submission',
             ]),
             perPage: $request->integer('per_page', 15)
         );

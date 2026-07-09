@@ -57,6 +57,13 @@ class TicketResourceDetail extends JsonResource
                 'actual_effort' => $this->actual_effort
             ],
             'parent_ticket_id' => $this->parent_ticket_id,
+            'is_public_submission' => (bool) $this->is_public_submission,
+            'submitter' => $this->is_public_submission ? [
+                'name' => $this->submitter_name,
+                'email' => $this->submitter_email,
+                'phone' => $this->submitter_phone,
+                'unit' => $this->submitter_unit,
+            ] : null,
             'conversion' => $this->isConverted() ? [
                 'type' => $this->converted_to_type->value,
                 'id' => $this->converted_to_id,

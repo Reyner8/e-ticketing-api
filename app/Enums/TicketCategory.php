@@ -4,6 +4,7 @@ namespace App\Enums;
 
 enum TicketCategory: string
 {
+    case GeneralReport = 'general_report';
     case SoftwareBug = 'software_bug';
     case FeatureRequest = 'feature_request';
     case NetworkIssue = 'network_issue';
@@ -14,6 +15,7 @@ enum TicketCategory: string
     public function label() : string
     {
         return match ($this) {
+            self::GeneralReport => 'General Report',
             self::SoftwareBug => 'Software Bug',
             self::FeatureRequest => 'Feature Request',
             self::NetworkIssue => 'Network Issue',
