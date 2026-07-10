@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use App\Exceptions\TicketAlreadyConvertedException;
 use App\Exceptions\TicketCannotBeConvertedException;
 use App\Models\FeatureRequest;
+use App\Services\Attachment\AttachmentService;
 use App\Services\ConversionHistoryService;
 use App\Services\Log\ActivityLogService;
 use App\Services\NotificationService;
@@ -25,6 +26,7 @@ class TicketConversionService
         private readonly ActivityLogService $logService,
         private readonly NotificationService $notificationService,
         private readonly ConversionHistoryService $historyService,
+        private readonly AttachmentService $attachmentService,
     ) {}
 
     public function convertToErrorReport(string $ticketId, array $data): ErrorReport
@@ -64,6 +66,13 @@ class TicketConversionService
                     'source_ticket_id' => $ticket->id,
                     'is_direct_input' => false,
                 ]);
+
+                // carry original evidence (e.g. public submission screenshots)
+                $this->attachmentService->copyToResource(
+                    source: $ticket,
+                    target: $errorReport,
+                    copiedBy: Auth::id() ?? $ticket->reporter_id
+                );
 
                 $this->markTicketAsConverted(
                     ticket: $ticket,
@@ -165,6 +174,13 @@ class TicketConversionService
                     'source_ticket_id' => $ticket->id,
                     'is_direct_input' => false,
                 ]);
+
+                // carry original evidence (e.g. public submission screenshots)
+                $this->attachmentService->copyToResource(
+                    source: $ticket,
+                    target: $featureRequest,
+                    copiedBy: Auth::id() ?? $ticket->reporter_id
+                );
 
                 $this->markTicketAsConverted(
                     ticket: $ticket,
