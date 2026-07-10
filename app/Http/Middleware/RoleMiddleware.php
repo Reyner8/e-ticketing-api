@@ -16,6 +16,11 @@ class RoleMiddleware
     {
         $userRole = $request->user()->role->value;
 
+        // Admin has full operational access across role-gated routes.
+        if ($userRole === 'admin') {
+            return $next($request);
+        }
+
         if (! in_array($userRole, $roles)) {
             abort(403, 'Access Forbidden');
         }
