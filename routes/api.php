@@ -182,7 +182,17 @@ Route::prefix('v1')->group(function () {
             Route::post('/tickets/{ticket}/unassign/team', [TicketAssignmentController::class, 'unassignTeam']);
         });
 
+        Route::middleware('role:it_staff,team_lead')->group(function () {
+            Route::patch('/tickets/{ticket}/status', [TicketStatusHistoryController::class, 'update']);
+            Route::patch('/features/{feature}/status', [FeatureRequestStatusHistoryController::class, 'update']);
+            Route::patch('/errors/{error}/status', [ErrorReportStatusHistoryController::class, 'update']);
+        });
+
         Route::middleware('role:it_staff')->group(function () {
+            Route::post('/tickets/{ticket}/claim', [TicketAssignmentController::class, 'claim']);
+            Route::post('/errors/{error}/claim', [ErrorReportAssignmentController::class, 'claim']);
+            Route::post('/features/{feature}/claim', [FeatureRequestAssignmentController::class, 'claim']);
+
             //ticket routes
             Route::put('/tickets/{ticket}', [TicketController::class, 'update'])->name('tickets.update');
             Route::delete('/tickets/{ticket}', [TicketController::class, 'destroy'])->name('tickets.delete');
@@ -200,11 +210,6 @@ Route::prefix('v1')->group(function () {
             Route::post('/feature-requests', [FeatureController::class, 'store'])->name('feature-requests.store');
             Route::put('/feature-requests/{feature}', [FeatureController::class, 'update'])->name('feature-requests.update');
             Route::delete('/feature-requests/{feature}', [FeatureController::class, 'destroy'])->name('feature-requests.delete');
-
-            //status history routes
-            Route::patch('/tickets/{ticket}/status', [TicketStatusHistoryController::class, 'update']);
-            Route::patch('/features/{feature}/status', [FeatureRequestStatusHistoryController::class, 'update']);
-            Route::patch('/errors/{error}/status', [ErrorReportStatusHistoryController::class, 'update']);
 
             //activity log routes
             Route::get('tickets/{ticket}/activity-logs', [ActivityLogController::class, 'ticket']);

@@ -17,6 +17,7 @@ class TicketAssignmentController extends Controller
         assignTeam as protected traitAssignTeam;
         unassignUser as protected traitUnassignUser;
         unassignTeam as protected traitUnassignTeam;
+        claim as protected traitClaim;
     }
 
     public function __construct(
@@ -36,6 +37,11 @@ class TicketAssignmentController extends Controller
     public function assignTeam(AssignTeamRequest $request, Ticket $ticket): JsonResponse
     {
         return $this->traitAssignTeam($request, $ticket);
+    }
+
+    public function claim(Ticket $ticket): JsonResponse
+    {
+        return $this->traitClaim($ticket);
     }
 
     public function unassignUser(Ticket $ticket): JsonResponse

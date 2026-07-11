@@ -27,6 +27,16 @@ trait HandleAssignment
         );
     }
 
+    public function claim(Model $resource): JsonResponse
+    {
+        $updated = $this->getAssignmentService()->claim($resource);
+
+        return ApiResponse::success(
+            new AssignmentResource($updated),
+            'Resource claimed successfully'
+        );
+    }
+
     public function assignTeam(AssignTeamRequest $request, Model $resource): JsonResponse
     {
         $updated = $this->getAssignmentService()->assignToTeam(

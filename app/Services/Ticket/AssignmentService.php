@@ -93,6 +93,34 @@ class AssignmentService
         return $resource->load('assignedUser');
     }
 
+    /**
+     * IT staff claims an unassigned resource for themselves.
+     */
+    public function claim(Model $resource): Model
+    {
+        $user = Auth::user();
+
+        if ($user->role->value !== 'it_staff') {
+            throw ValidationException::withMessages([
+                'claim' => ['Only IT staff can claim resources.']
+            ]);
+        }
+
+        if ($resource->assigned_to_id) {
+            if ((int) $resource->assigned_to_id === $user->id) {
+                throw ValidationException::withMessages([
+                    'claim' => ['You have already claimed this resource.']
+                ]);
+            }
+
+            throw ValidationException::withMessages([
+                'claim' => ['This resource is already assigned to another user.']
+            ]);
+        }
+
+        return $this->assignToUser($resource, $user->id);
+    }
+
     public function assignToTeam(Model $resource, string $team): Model
     {
         $this->guardNotAssignable($resource);

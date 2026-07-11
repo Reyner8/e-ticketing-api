@@ -17,6 +17,7 @@ class FeatureRequestAssignmentController extends Controller
         assignTeam as protected traitAssignTeam;
         unassignUser as protected traitUnassignUser;
         unassignTeam as protected traitUnassignTeam;
+        claim as protected traitClaim;
     }
 
     public function __construct(
@@ -36,6 +37,11 @@ class FeatureRequestAssignmentController extends Controller
     public function assignTeam(AssignTeamRequest $request, FeatureRequest $feature): JsonResponse
     {
         return $this->traitAssignTeam($request, $feature);
+    }
+
+    public function claim(FeatureRequest $feature): JsonResponse
+    {
+        return $this->traitClaim($feature);
     }
     
     public function unassignUser(FeatureRequest $feature): JsonResponse

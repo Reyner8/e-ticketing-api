@@ -17,6 +17,7 @@ class ErrorReportAssignmentController extends Controller
         assignTeam as protected traitAssignTeam;
         unassignUser as protected traitUnassignUser;
         unassignTeam as protected traitUnassignTeam;
+        claim as protected traitClaim;
     }
 
     public function __construct(
@@ -36,6 +37,11 @@ class ErrorReportAssignmentController extends Controller
     public function assignTeam(AssignTeamRequest $request, ErrorReport $error): JsonResponse
     {
         return $this->traitAssignTeam($request, $error);
+    }
+
+    public function claim(ErrorReport $error): JsonResponse
+    {
+        return $this->traitClaim($error);
     }
     
     public function unassignUser(ErrorReport $error): JsonResponse

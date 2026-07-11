@@ -31,6 +31,8 @@ class StatusHistoryService
         string $newStatus,
         array $extra = []
     ): StatusHistory {
+        $this->guardStatusChangeByAssignee($resource);
+
         $previousStatus = $resource->status instanceof \BackedEnum
             ? $resource->status->value
             : (string) $resource->status;
@@ -91,6 +93,38 @@ class StatusHistoryService
         }
 
         return $history;
+    }
+
+    /**
+     * IT staff may only change status when they are the assignee.
+     * Team lead and admin are unrestricted.
+     */
+    private function guardStatusChangeByAssignee(Model $resource): void
+    {
+        $user = Auth::user();
+        $role = $user->role->value;
+
+        if (in_array($role, ['admin', 'team_lead'], true)) {
+            return;
+        }
+
+        if ($role !== 'it_staff') {
+            throw ValidationException::withMessages([
+                'status' => ['You are not allowed to change the status of this resource.']
+            ]);
+        }
+
+        if (! $resource->assigned_to_id) {
+            throw ValidationException::withMessages([
+                'status' => ['Claim or get assigned to this resource before changing its status.']
+            ]);
+        }
+
+        if ((int) $resource->assigned_to_id !== $user->id) {
+            throw ValidationException::withMessages([
+                'status' => ['Only the assigned IT staff member can change the status.']
+            ]);
+        }
     }
 
     public function record(
