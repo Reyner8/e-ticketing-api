@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ErrorReportStatus;
+use App\Enums\UserRole;
 use App\Models\ErrorReport;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -54,8 +55,14 @@ class ErrorReportService
     //* Query
     public function getAll(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
+        $user = Auth::user();
+
         return ErrorReport::query()
             ->with(['reporter:id,username,name', 'assignedUser:id,username,name', 'tags'])
+            ->when(
+                $user && $user->role === UserRole::Reporter,
+                fn($q) => $q->where('reporter_id', $user->id)
+            )
             ->when(
                 isset($filters['status']),
                 fn($q) => $q->byStatus('status', $filters['status'])

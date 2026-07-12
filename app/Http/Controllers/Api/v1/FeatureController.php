@@ -6,12 +6,14 @@ use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\FeatureRequest\StoreFeatureRequest;
 use App\Http\Requests\FeatureRequest\UpdateFeatureRequest;
+use App\Enums\UserRole;
 use App\Http\Resources\FeatureDetailResource;
 use App\Http\Resources\FeatureResource;
 use App\Models\FeatureRequest;
 use App\Services\FeatureRequestService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class FeatureController extends Controller
@@ -19,11 +21,41 @@ class FeatureController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $feature = FeatureRequest::with(['assignee', 'reporter', 'approver'])
+        $user = Auth::user();
+
+        $feature = FeatureRequest::with(['assignee', 'reporter', 'approver', 'tags'])
+            ->when(
+                $user && $user->role === UserRole::Reporter,
+                fn($q) => $q->where('reporter_id', $user->id)
+            )
+            ->when(
+                $request->filled('status'),
+                fn($q) => $q->where('status', $request->query('status'))
+            )
+            ->when(
+                $request->filled('priority'),
+                fn($q) => $q->where('priority', $request->query('priority'))
+            )
+            ->when(
+                $request->filled('request_type'),
+                fn($q) => $q->where('request_type', $request->query('request_type'))
+            )
+            ->when(
+                $request->filled('assigned_team'),
+                fn($q) => $q->where('assigned_team', $request->query('assigned_team'))
+            )
+            ->when(
+                $request->filled('reporter_id'),
+                fn($q) => $q->where('reporter_id', $request->query('reporter_id'))
+            )
+            ->when(
+                $request->filled('search'),
+                fn($q) => $q->where('title', 'like', '%' . $request->query('search') . '%')
+            )
             ->latest()
-            ->paginate(10);
+            ->paginate(min($request->integer('per_page', 15), 50));
 
         return ApiResponse::paginated(
             $feature,
