@@ -72,8 +72,8 @@ class AttachmentService
     /**
      * Duplicate resource-level attachments from one model to another.
      * Used when a ticket is converted so the original evidence (e.g. public
-     * submission screenshots) follows the new Error Report / Feature Request.
-     * Comment-scoped attachments are skipped.
+ * Comment-scoped attachments are stored on the Comment model (separate morph);
+ * resource-level attachments on the source are copied as-is.
      *
      * @return int Number of attachments copied
      */
@@ -82,9 +82,7 @@ class AttachmentService
         $copied = 0;
         $folder = $this->resolveFolder($target);
 
-        $attachments = $source->attachments()
-            ->whereNull('comment_id')
-            ->get();
+        $attachments = $source->attachments()->get();
 
         foreach ($attachments as $attachment) {
             $sourcePath = Str::after($attachment->url, '/storage/');

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Helpers\ApiResponse;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\TicketResource;
+use App\Http\Resources\Ticket\TicketResource;
 use App\Http\Resources\TicketWatcherResource;
 use App\Models\Ticket;
 use App\Services\TicketWatcherService;

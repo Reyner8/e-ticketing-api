@@ -16,7 +16,6 @@ use function Symfony\Component\Clock\now;
     'url',
     'attachable_id',
     'attachable_type',
-    'comment_id',
     'uploaded_by',
     'uploaded_at',
 ])]
