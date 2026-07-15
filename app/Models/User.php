@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -157,12 +156,5 @@ class User extends Authenticatable
     public function convertBy(): HasMany
     {
         return $this->hasMany(Ticket::class, 'converted_by');
-    }
-
-    public function watchedTickets(): BelongsToMany
-    {
-        return $this->belongsToMany(Ticket::class, 'ticket_watchers', 'user_id', 'ticket_id')
-            ->using(TicketWatcher::class)
-            ->withPivot('created_at');
     }
 }

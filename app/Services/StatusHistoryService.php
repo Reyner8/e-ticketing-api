@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\ActivityAction;
 use App\Enums\TicketStatus;
 use App\Models\StatusHistory;
 use App\Models\Ticket;
@@ -18,7 +17,6 @@ class StatusHistoryService
     public function __construct(
         private readonly ActivityLogService $logService,
         private readonly NotificationService $notificationService,
-        private readonly TicketWatcherService $watcherService,
     ) {}
     /**
      * @param Model $resource           Resource whose status has changed
@@ -31,6 +29,12 @@ class StatusHistoryService
         string $newStatus,
         array $extra = []
     ): StatusHistory {
+        if ($resource instanceof Ticket && $resource->isConverted()) {
+            throw ValidationException::withMessages([
+                'status' => ['Converted tickets cannot be updated. Manage status on the linked Error Report or Feature Request.'],
+            ]);
+        }
+
         $this->guardStatusChangeByAssignee($resource);
 
         $previousStatus = $resource->status instanceof \BackedEnum
@@ -80,16 +84,6 @@ class StatusHistoryService
                     updateDetails: $updateDetails
                 );
             }
-
-            //* watcher notification
-            $this->watcherService->notifyWatchers(
-                ticket: $resource,
-                event: ActivityAction::StatusChanged->value,
-                details: [
-                    'previous_status' => $previousStatus,
-                    'new_status' => $newStatus
-                ]
-            );
         }
 
         return $history;

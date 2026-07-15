@@ -35,7 +35,6 @@ use App\Http\Controllers\Api\v1\SystemConfigurationController;
 use App\Http\Controllers\Api\v1\TagController;
 use App\Http\Controllers\Api\v1\TeamWorkloadSnapshotController;
 use App\Http\Controllers\Api\v1\Ticket\MergedTicketController;
-use App\Http\Controllers\Api\v1\TicketWatcherController;
 use App\Http\Controllers\Api\v1\TimelineEntryController;
 use App\Http\Controllers\Api\v1\UserController;
 
@@ -114,12 +113,6 @@ Route::prefix('v1')->group(function () {
             Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
             Route::delete('/notifications/read', [NotificationController::class, 'deleteAllRead']);
             Route::delete('/notifications/{notification}', [NotificationController::class, 'destroy']);
-
-            //ticket watcher routes
-            Route::get('/tickets/{ticket}/watchers', [TicketWatcherController::class, 'index']);
-            Route::get('/tickets/{ticket}/watch/status', [TicketWatcherController::class, 'status']);
-            Route::get('/me/watched-tickets', [TicketWatcherController::class, 'watchedTickets']);
-            Route::post('/tickets/{ticket}/watch', [TicketWatcherController::class, 'toggleWatch']);
 
             //conversion history routes
             Route::get('/conversion-history', [ConversionHistoryController::class, 'index']);
@@ -243,10 +236,6 @@ Route::prefix('v1')->group(function () {
             Route::post('{resourceType}/{resourceId}/tags/attach', [TagController::class, 'attach'])->where('resourceType', 'tickets|features|errors');
             Route::post('{resourceType}/{resourceId}/tags/detach', [TagController::class, 'detach'])->where('resourceType', 'tickets|features|errors');
             Route::put('{resourceType}/{resourceId}/tags/sync', [TagController::class, 'sync'])->where('resourceType', 'tickets|features|errors');
-
-            //ticket watcher routes
-            Route::post('tickets/{ticket}/watchers', [TicketWatcherController::class, 'addWatcher']);
-            Route::delete('tickets/{ticket}/watchers/{userId}', [TicketWatcherController::class, 'removeWatcher']);
 
             //merge ticket routes
             Route::post('/tickets/{ticket}/merge', [MergedTicketController::class, 'mergeTicket']);

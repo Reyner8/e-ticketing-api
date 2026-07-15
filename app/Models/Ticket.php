@@ -126,13 +126,6 @@ class Ticket extends Model
         return $this->morphMany(Comment::class, 'commentable');
     }
 
-    public function watchers(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class, 'ticket_watchers', 'ticket_id', 'user_id')
-            ->using(TicketWatcher::class)
-            ->withPivot('created_at');
-    }
-
     public function conversionHistories(): HasMany
     {
         return $this->hasMany(ConversionHistory::class, 'source_ticket_id');
@@ -209,16 +202,6 @@ class Ticket extends Model
             ConversionTypes::FeatureRequest => route('feature-request.show', $this->converted_to_id),
             default => null
         };
-    }
-
-    public function isWatchedBy(int $userId): bool
-    {
-        return $this->watchers()->where('users.id', $userId)->exists();
-    }
-
-    public function watchersCount(): int
-    {
-        return $this->watchers()->count();
     }
 
     public function isMerged(): bool
