@@ -5,6 +5,7 @@ namespace App\Http\Requests\FeatureRequest;
 use App\Enums\AssignedTeam;
 use App\Enums\Priorities;
 use App\Enums\RequestType;
+use App\Enums\TargetApplication;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -38,6 +39,7 @@ class StoreFeatureRequest extends FormRequest
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'request_type' => ['required', 'string', Rule::in(RequestType::values())],
+            'target_application' => ['nullable', 'string', Rule::in(TargetApplication::values())],
             'priority' => ['required', 'string', Rule::in(Priorities::values())],
             'assigned_to_id' => 'nullable|integer|exists:users,id',
             'assigned_team' => ['nullable', 'string', 'max:255', Rule::in(AssignedTeam::values())],

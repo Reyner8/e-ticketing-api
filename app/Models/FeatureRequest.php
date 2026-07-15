@@ -7,6 +7,7 @@ use App\Enums\AssignedTeam;
 use App\Enums\FeatureRequestStatus;
 use App\Enums\Priorities;
 use App\Enums\RequestType;
+use App\Enums\TargetApplication;
 use App\Observers\FeatureRequestObserver;
 use App\Traits\HasActivityLog;
 use App\Traits\HasApproval;
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'title',
     'description',
     'request_type',
+    'target_application',
     'priority',
     'status',
     'progress',
@@ -67,6 +69,7 @@ class FeatureRequest extends Model
         'assigned_team' => AssignedTeam::class,
         'priority' => Priorities::class,
         'request_type' => RequestType::class,
+        'target_application' => TargetApplication::class,
         'approval_status' => ApprovalStatus::class,
         'approval_date' => 'datetime',
         'assignment_date' => 'datetime',
