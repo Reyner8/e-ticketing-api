@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Ticket;
 
-use App\Http\Resources\TagResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -70,7 +69,6 @@ class TicketResourceDetail extends JsonResource
                 'at' => $this->converted_at?->format('Y-m-d H:i:s'),
                 'reason' => $this->conversion_reason
             ]: null,
-            'tags' => TagResource::collection($this->whenLoaded('tags')),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
