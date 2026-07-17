@@ -32,7 +32,6 @@ use App\Http\Controllers\Api\v1\StatusHistory\ErrorReportStatusHistoryController
 use App\Http\Controllers\Api\v1\StatusHistory\FeatureRequestStatusHistoryController;
 use App\Http\Controllers\Api\v1\StatusHistory\TicketStatusHistoryController;
 use App\Http\Controllers\Api\v1\SystemConfigurationController;
-use App\Http\Controllers\Api\v1\TagController;
 use App\Http\Controllers\Api\v1\TeamWorkloadSnapshotController;
 use App\Http\Controllers\Api\v1\Ticket\MergedTicketController;
 use App\Http\Controllers\Api\v1\TimelineEntryController;
@@ -99,10 +98,6 @@ Route::prefix('v1')->group(function () {
             //timeline routes
             Route::get('feature-requests/{feature}/timelines', [TimelineEntryController::class, 'index']);
             Route::get('feature-requests/{feature}/timelines/{entry}', [TimelineEntryController::class, 'show']);
-
-            //tag routes
-            Route::get('tags', [TagController::class, 'index']);
-            Route::get('tags/{tag}', [TagController::class, 'show']);
 
             //notification routes
             Route::get('/notifications', [NotificationController::class, 'index']);
@@ -228,14 +223,6 @@ Route::prefix('v1')->group(function () {
             Route::patch('feature-requests/{feature}/timelines/{entry}/progress', [TimelineEntryController::class, 'updateProgress']);
             Route::patch('feature-requests/{feature}/timelines/{entry}/complete', [TimelineEntryController::class, 'complete']);
             Route::delete('feature-requests/{feature}/timelines/{entry}', [TimelineEntryController::class, 'destroy']);
-
-            //tag routes
-            Route::post('tags', [TagController::class, 'store']);
-            Route::put('tags/{tag}', [TagController::class, 'update']);
-            Route::delete('tags/{tag}', [TagController::class, 'destroy']);
-            Route::post('{resourceType}/{resourceId}/tags/attach', [TagController::class, 'attach'])->where('resourceType', 'tickets|features|errors');
-            Route::post('{resourceType}/{resourceId}/tags/detach', [TagController::class, 'detach'])->where('resourceType', 'tickets|features|errors');
-            Route::put('{resourceType}/{resourceId}/tags/sync', [TagController::class, 'sync'])->where('resourceType', 'tickets|features|errors');
 
             //merge ticket routes
             Route::post('/tickets/{ticket}/merge', [MergedTicketController::class, 'mergeTicket']);
