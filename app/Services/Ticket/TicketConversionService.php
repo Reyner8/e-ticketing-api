@@ -149,6 +149,7 @@ class TicketConversionService
                     'title' => $data['title'],
                     'description' => $data['description'],
                     'request_type' => $data['request_type'],
+                    'target_application' => $data['target_application'],
                     'priority' => $data['priority'],
                     'status' => FeatureRequestStatus::PendingApproval,
                     'progress' => 0,
