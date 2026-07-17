@@ -25,7 +25,7 @@ class FeatureController extends Controller
     {
         $user = Auth::user();
 
-        $feature = FeatureRequest::with(['assignee', 'reporter', 'approver', 'tags'])
+        $feature = FeatureRequest::with(['assignee', 'reporter', 'approver'])
             ->when(
                 $user && $user->role === UserRole::Reporter,
                 fn($q) => $q->where('reporter_id', $user->id)
