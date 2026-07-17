@@ -5,6 +5,7 @@ namespace App\Http\Requests\Ticket;
 use App\Enums\AssignedTeam;
 use App\Enums\Priorities;
 use App\Enums\RequestType;
+use App\Enums\TargetApplication;
 use App\Enums\TicketStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -30,6 +31,7 @@ class ConvertToFeatureRequestRequest extends FormRequest
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
             'request_type' => ['required', 'string', Rule::in(RequestType::values())],
+            'target_application' => ['required', 'string', Rule::in(TargetApplication::values())],
             'priority' => ['nullable', 'string', Rule::in(Priorities::values())],
             'assigned_to_id' => 'nullable|integer|exists:users,id',
             'assigned_team' => ['nullable', 'string', 'max:255', Rule::in(AssignedTeam::values())],
