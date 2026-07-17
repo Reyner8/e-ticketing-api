@@ -35,7 +35,6 @@ class TicketController extends Controller
                 'reporter_id',
                 'sla_breached',
                 'overdue',
-                'tags',
                 'search',
                 'is_public_submission',
             ]),
@@ -75,7 +74,7 @@ class TicketController extends Controller
         }
 
         return ApiResponse::success(
-            new TicketResourceDetail($ticket->load(['reporter', 'assignedUser', 'tags'])),
+            new TicketResourceDetail($ticket->load(['reporter', 'assignedUser'])),
             'Ticket retrieved successfully'
         );
     }
