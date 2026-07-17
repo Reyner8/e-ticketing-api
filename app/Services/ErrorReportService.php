@@ -25,7 +25,7 @@ class ErrorReportService
             'due_date' => null
         ]);
 
-        return $errorReport->load(['reporter', 'assignedUser', 'tags']);
+        return $errorReport->load(['reporter', 'assignedUser']);
     }
 
     public function update(ErrorReport $error, array $data): ErrorReport
@@ -38,7 +38,7 @@ class ErrorReportService
 
         $error->update($data);
 
-        return $error->load(['reporter', 'assignedUser', 'tags']);
+        return $error->load(['reporter', 'assignedUser']);
     }
 
     public function delete(ErrorReport $error): void
@@ -58,7 +58,7 @@ class ErrorReportService
         $user = Auth::user();
 
         return ErrorReport::query()
-            ->with(['reporter:id,username,name', 'assignedUser:id,username,name', 'tags'])
+            ->with(['reporter:id,username,name', 'assignedUser:id,username,name'])
             ->when(
                 $user && $user->role === UserRole::Reporter,
                 fn($q) => $q->where('reporter_id', $user->id)
@@ -97,10 +97,6 @@ class ErrorReportService
                     $isDirect = filter_var($filters['is_direct_input'], FILTER_VALIDATE_BOOLEAN);
                     return $isDirect ? $q->directInput() : $q->fromTicket();
                 }
-            )
-            ->when(
-                ! empty($filters['tags']),
-                fn($q) => $q->withAnyTag($filters['tags'])
             )
             ->when(
                 isset($filters['search']),
