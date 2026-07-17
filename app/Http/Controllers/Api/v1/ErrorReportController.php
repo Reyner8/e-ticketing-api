@@ -29,7 +29,7 @@ class ErrorReportController extends Controller
                 'category', 'assigned_team',
                 'reporter_id', 'sla_breached',
                 'overdue', 'is_direct_input',
-                'tags', 'search'
+                'search'
             ]),
             perPage: $request->integer('per_page', 15)
         );
@@ -61,7 +61,7 @@ class ErrorReportController extends Controller
         }
         
         return ApiResponse::success(
-            new ErrorReportResourceDetail($error->load(['reporter', 'assignedUser', 'sourceTicket:id,title,status', 'tags'])),
+            new ErrorReportResourceDetail($error->load(['reporter', 'assignedUser', 'sourceTicket:id,title,status'])),
             'Error report retrieved successfully.'
         );
     }
