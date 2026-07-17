@@ -69,4 +69,37 @@ class UpdateFeatureRequest extends FormRequest
             'is_direct_input' => 'sometimes|boolean',
         ];
     }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if (!$this->has('due_date') || $this->input('due_date') === null) {
+                return;
+            }
+
+            $feature = $this->route('feature');
+            if (!$feature) {
+                return;
+            }
+
+            $status = $feature->status instanceof FeatureRequestStatus
+                ? $feature->status->value
+                : (string) $feature->status;
+
+            $allowed = [
+                FeatureRequestStatus::Development->value,
+                FeatureRequestStatus::Testing->value,
+                FeatureRequestStatus::Validation->value,
+                FeatureRequestStatus::Completed->value,
+                FeatureRequestStatus::PostImplementationReview->value,
+            ];
+
+            if (!in_array($status, $allowed, true)) {
+                $validator->errors()->add(
+                    'due_date',
+                    'Due date hanya dapat diatur setelah status Development.'
+                );
+            }
+        });
+    }
 }
