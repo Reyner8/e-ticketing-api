@@ -40,7 +40,6 @@ class FeatureResource extends JsonResource
                 'label' => $this->assigned_team->label(),
             ] : null,
             'sla_breached' => (bool) $this->sla_breached,
-            'tags' => TagResource::collection($this->whenLoaded('tags')),
             'date_submitted' => $this->date_submitted,
             'due_date' => $this->due_date,
             'completion_date' => $this->completion_date,
