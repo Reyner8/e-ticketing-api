@@ -16,7 +16,6 @@ use App\Traits\HasAssignment;
 use App\Traits\HasAttachments;
 use App\Traits\HasComments;
 use App\Traits\HasStatusHistory;
-use App\Traits\HasTags;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
@@ -69,7 +68,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Ticket extends Model
 {
-    use HasComments, HasAttachments, HasStatusHistory, HasActivityLog, HasAssignment, HasApproval, HasTags;
+    use HasComments, HasAttachments, HasStatusHistory, HasActivityLog, HasAssignment, HasApproval;
     protected $keyType = 'string';
     public $incrementing = false;
 
