@@ -29,14 +29,14 @@ class TicketService
             return $ticket;
         });
 
-        return $ticket->load(['reporter', 'assignedUser', 'tags']);
+        return $ticket->load(['reporter', 'assignedUser']);
     }
 
     public function update(Ticket $ticket, array $data): Ticket
     {
         $ticket->update($data);
 
-        return $ticket->load(['reporter', 'assignedUser', 'tags']);
+        return $ticket->load(['reporter', 'assignedUser']);
     }
 
     public function delete(Ticket $ticket): void
@@ -50,7 +50,7 @@ class TicketService
         $user = Auth::user();
 
         return Ticket::query()
-            ->with(['reporter:id,name,username', 'assignedUser:id,name,username', 'tags'])
+            ->with(['reporter:id,name,username', 'assignedUser:id,name,username'])
             ->when(
                 $user->role === UserRole::Reporter,
                 fn($q) => $q->where('reporter_id', $user->id)
@@ -82,10 +82,6 @@ class TicketService
             ->when(
                 isset($filters['overdue']),
                 fn($q) => $q->overdue()
-            )
-            ->when(
-                ! empty($filters['tags']),
-                fn($q) => $q->withAnyTags($filters['tags'])
             )
             ->when(
                 isset($filters['search']),
