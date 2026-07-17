@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\ErrorReport;
 
-use App\Http\Resources\TagResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -69,7 +68,6 @@ class ErrorReportResourceDetail extends JsonResource
                 'is_direct_input' => $this->is_direct_input,
                 'source_ticket_id' => $this->source_ticket_id
             ],
-            'tags' => TagResource::collection($this->whenLoaded('tags')),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
