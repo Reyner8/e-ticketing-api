@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Ticket;
 
-use App\Http\Resources\TagResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -36,7 +35,6 @@ class TicketResource extends JsonResource
                 'label' => $this->assigned_team->label(),
             ] : null,
             'sla_breached' => (bool) $this->sla_breached,
-            'tags' => TagResource::collection($this->whenLoaded('tags')),
             'is_public_submission' => (bool) $this->is_public_submission,
             'submitter_name' => $this->submitter_name,
             'submitter_unit' => $this->submitter_unit,
