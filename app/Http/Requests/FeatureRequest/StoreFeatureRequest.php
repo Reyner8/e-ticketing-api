@@ -43,13 +43,7 @@ class StoreFeatureRequest extends FormRequest
             'priority' => ['required', 'string', Rule::in(Priorities::values())],
             'assigned_to_id' => 'nullable|integer|exists:users,id',
             'assigned_team' => ['nullable', 'string', 'max:255', Rule::in(AssignedTeam::values())],
-            'assignment_date' => 'nullable|date',
-            'start_date' => 'nullable|date',
             'due_date' => 'nullable|date',
-            'review_date' => 'nullable|date',
-            'estimated_effort' => 'nullable|numeric|decimal:0,2',
-            'roi_impact' => 'nullable|string',
-            'quality_impact' => 'nullable|string',
             'source_ticket_id' => 'nullable|integer|exists:feature_requests,id',
             'is_direct_input' => 'required|boolean',
         ];

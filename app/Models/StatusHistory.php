@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Model;
 
-use function Symfony\Component\Clock\now;
-
 #[WithoutTimestamps]
 #[Fillable([
     'statusable_type',
@@ -17,6 +15,7 @@ use function Symfony\Component\Clock\now;
     'new_status',
     'changed_by',
     'changed_at',
+    'effective_at',
     'reason',
     'notes',
 ])]
@@ -24,24 +23,32 @@ use function Symfony\Component\Clock\now;
 class StatusHistory extends Model
 {
     use HasActivityLog;
-    
+
+    protected $casts = [
+        'changed_at' => 'datetime',
+        'effective_at' => 'datetime',
+    ];
+
     protected static function boot()
     {
         parent::boot();
 
         static::creating(function (self $model) {
-            if (empty($model)) {
-                $model->changed_at = now();
+            $now = now();
+            if (empty($model->changed_at)) {
+                $model->changed_at = $now;
+            }
+            if (empty($model->effective_at)) {
+                $model->effective_at = $model->changed_at ?? $now;
             }
         });
     }
 
-    // Relation
     public function statusable()
     {
         return $this->morphTo();
     }
-    
+
     public function ticket()
     {
         return $this->belongsTo(Ticket::class, 'ticket_id');
@@ -51,10 +58,12 @@ class StatusHistory extends Model
     {
         return $this->belongsTo(ErrorReport::class, 'error_report_id');
     }
+
     public function featureRequest()
     {
         return $this->belongsTo(FeatureRequest::class, 'feature_request_id');
     }
+
     public function changer()
     {
         return $this->belongsTo(User::class, 'changed_by');

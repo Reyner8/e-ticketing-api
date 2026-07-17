@@ -35,11 +35,8 @@ class ConvertToFeatureRequestRequest extends FormRequest
             'priority' => ['nullable', 'string', Rule::in(Priorities::values())],
             'assigned_to_id' => 'nullable|integer|exists:users,id',
             'assigned_team' => ['nullable', 'string', 'max:255', Rule::in(AssignedTeam::values())],
-            'start_date' => 'nullable|date',
             'due_date' => 'nullable|date',
-            'review_date' => 'nullable|date',
-            'estimated_effort' => 'nullable|numeric|decimal:0,2',
-            'conversion_reason' => 'required|string'
+            'conversion_reason' => 'required|string',
         ];
     }
 }

@@ -2,12 +2,13 @@
 
 namespace App\Services;
 
-use App\Enums\TicketStatus;
+use App\Models\FeatureRequest;
 use App\Models\StatusHistory;
 use App\Models\Ticket;
 use App\Services\Log\ActivityLogService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,12 +19,7 @@ class StatusHistoryService
         private readonly ActivityLogService $logService,
         private readonly NotificationService $notificationService,
     ) {}
-    /**
-     * @param Model $resource           Resource whose status has changed
-     * @param string $newStatus         New Status
-     * @param array $extra              Additional Attribute: reason, notes
-     * @return StatusHistory
-     */
+
     public function update(
         Model $resource,
         string $newStatus,
@@ -43,17 +39,27 @@ class StatusHistoryService
 
         if ($previousStatus === $newStatus) {
             throw ValidationException::withMessages([
-                'status' => ["Status is already {$newStatus}."]
+                'status' => ["Status is already {$newStatus}."],
             ]);
         }
 
-        $history = DB::transaction(function () use ($resource, $previousStatus, $newStatus, $extra) {
+        $effectiveAt = isset($extra['effective_at'])
+            ? Carbon::parse($extra['effective_at'])
+            : now();
+
+        $history = DB::transaction(function () use ($resource, $previousStatus, $newStatus, $extra, $effectiveAt) {
             $resource->update(['status' => $newStatus]);
+
+            if ($resource instanceof FeatureRequest) {
+                $resource->syncProgressFromMilestones($newStatus);
+            }
 
             $history = $resource->statusHistories()->create([
                 'previous_status' => $previousStatus,
                 'new_status' => $newStatus,
                 'changed_by' => Auth::id(),
+                'changed_at' => now(),
+                'effective_at' => $effectiveAt,
                 'reason' => $extra['reason'] ?? null,
                 'notes' => $extra['notes'] ?? null,
             ]);
@@ -67,7 +73,6 @@ class StatusHistoryService
             return $history;
         });
 
-        //* notification
         if ($resource instanceof Ticket) {
             $updateDetails = "Status changed from '{$previousStatus}' to '{$newStatus}'.";
 
@@ -89,10 +94,34 @@ class StatusHistoryService
         return $history;
     }
 
-    /**
-     * IT staff may only change status when they are the assignee.
-     * Team lead and admin are unrestricted.
-     */
+    public function recordStatusChange(
+        Model $resource,
+        string $previousStatus,
+        string $newStatus,
+        array $extra = [],
+    ): ?StatusHistory {
+        if ($previousStatus === $newStatus) {
+            return null;
+        }
+
+        return $this->record($resource, $previousStatus, $newStatus, $extra);
+    }
+
+    public function recordInitialStatus(Model $resource, string $status, array $extra = []): StatusHistory
+    {
+        return $resource->statusHistories()->create([
+            'previous_status' => $status,
+            'new_status' => $status,
+            'changed_by' => Auth::id(),
+            'changed_at' => now(),
+            'effective_at' => isset($extra['effective_at'])
+                ? Carbon::parse($extra['effective_at'])
+                : now(),
+            'reason' => $extra['reason'] ?? 'Initial status',
+            'notes' => $extra['notes'] ?? null,
+        ]);
+    }
+
     private function guardStatusChangeByAssignee(Model $resource): void
     {
         $user = Auth::user();
@@ -104,19 +133,19 @@ class StatusHistoryService
 
         if ($role !== 'it_staff') {
             throw ValidationException::withMessages([
-                'status' => ['You are not allowed to change the status of this resource.']
+                'status' => ['You are not allowed to change the status of this resource.'],
             ]);
         }
 
         if (! $resource->assigned_to_id) {
             throw ValidationException::withMessages([
-                'status' => ['Claim or get assigned to this resource before changing its status.']
+                'status' => ['Claim or get assigned to this resource before changing its status.'],
             ]);
         }
 
         if ((int) $resource->assigned_to_id !== $user->id) {
             throw ValidationException::withMessages([
-                'status' => ['Only the assigned IT staff member can change the status.']
+                'status' => ['Only the assigned IT staff member can change the status.'],
             ]);
         }
     }
@@ -127,10 +156,16 @@ class StatusHistoryService
         string $newStatus,
         array $extra = [],
     ): StatusHistory {
+        $effectiveAt = isset($extra['effective_at'])
+            ? Carbon::parse($extra['effective_at'])
+            : now();
+
         return $resource->statusHistories()->create([
             'previous_status' => $previousStatus,
             'new_status' => $newStatus,
-            'changed_by' => (string) Auth::id(),
+            'changed_by' => Auth::id(),
+            'changed_at' => now(),
+            'effective_at' => $effectiveAt,
             'reason' => $extra['reason'] ?? null,
             'notes' => $extra['notes'] ?? null,
         ]);
@@ -140,7 +175,8 @@ class StatusHistoryService
     {
         return $resource->statusHistories()
             ->with('changer:id,name,username')
-            ->latest('changed_at')
+            ->orderBy('effective_at')
+            ->orderBy('id')
             ->paginate(min($perPage, 50));
     }
 }

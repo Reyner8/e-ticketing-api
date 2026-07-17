@@ -33,23 +33,11 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
     'reporter_id',
     'assigned_to_id',
     'assigned_team',
-    'date_submitted',
-    'approval_date',
-    'assignment_date',
-    'start_date',
     'due_date',
-    'completion_date',
-    'review_date',
-    'estimated_effort',
-    'actual_effort',
-    'sla_time_elapsed',
-    'sla_time_remaining',
     'sla_breached',
     'approval_status',
     'approved_by',
     'rejection_reason',
-    'roi_impact',
-    'quality_impact',
     'post_implementation_notes',
     'source_ticket_id',
     'is_direct_input',
@@ -60,7 +48,9 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class FeatureRequest extends Model
 {
     use HasComments, HasAttachments, HasStatusHistory, HasActivityLog, HasAssignment, HasApproval;
+
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $casts = [
@@ -70,12 +60,9 @@ class FeatureRequest extends Model
         'request_type' => RequestType::class,
         'target_application' => TargetApplication::class,
         'approval_status' => ApprovalStatus::class,
-        'approval_date' => 'datetime',
-        'assignment_date' => 'datetime',
-        'date_reported' => 'datetime'
+        'due_date' => 'datetime',
     ];
 
-    // Relations
     public function reporter()
     {
         return $this->belongsTo(User::class, 'reporter_id');
@@ -118,41 +105,38 @@ class FeatureRequest extends Model
             ->where('is_completed', false);
     }
 
-    public function timelineEntries(): HasMany
-    {
-        return $this->hasMany(TimelineEntry::class, 'feature_request_id')->orderBy('phase');
-    }
-
-    public function completedTimeline(): HasMany
-    {
-        return $this->hasMany(TimelineEntry::class, 'feature_request_id')->where('is_completed', true);
-    }
-
-    public function pendingTimeline(): HasMany
-    {
-        return $this->hasMany(TimelineEntry::class, 'feature_request_id')->where('is_completed', false);
-    }
-
-    // Helpers
+    /**
+     * Progress = rata-rata progress semua milestone.
+     * Tanpa milestone → 0.
+     */
     public function calculateOverallProgress(): int
     {
-        $milestones = $this->milestones;
+        $milestones = $this->milestones()->get();
 
         if ($milestones->isEmpty()) {
             return 0;
         }
 
-        return (int) $milestones->avg('progress');
+        return (int) round($milestones->avg('progress'));
     }
-    
-    public function calculateTimelineProgress(): int
+
+    /**
+     * Hitung ulang progress feature dari milestone lalu simpan.
+     * Status Completed / Post Implementation Review dianggap 100% penuh.
+     */
+    public function syncProgressFromMilestones(?string $statusValue = null): void
     {
-        $entries = $this->timelineEntries;
+        $status = $statusValue ?? ($this->status instanceof FeatureRequestStatus
+            ? $this->status->value
+            : (string) $this->status);
 
-        if ($entries->isEmpty()) {
-            return 0;
-        }
+        $isDone = in_array($status, [
+            FeatureRequestStatus::Completed->value,
+            FeatureRequestStatus::PostImplementationReview->value,
+        ], true);
 
-        return (int) $entries->avg('progress');
+        $progress = $isDone ? 100 : $this->calculateOverallProgress();
+
+        $this->update(['progress' => $progress]);
     }
 }

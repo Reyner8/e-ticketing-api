@@ -29,6 +29,8 @@ class StatusHistoryResource extends JsonResource
             ]: null,
             'reason' => $this->reason,
             'notes' => $this->notes,
+            'changed_at' => $this->changed_at?->format('Y-m-d H:i:s'),
+            'effective_at' => $this->effective_at?->format('Y-m-d H:i:s'),
         ];
     }
 }

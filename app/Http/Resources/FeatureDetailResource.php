@@ -7,11 +7,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class FeatureDetailResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
         return [
@@ -29,25 +24,13 @@ class FeatureDetailResource extends JsonResource
                 ? $this->approval_status->value
                 : $this->approval_status,
             'progress' => $this->progress,
-            'reporter_id' =>$this->reporter_id,
-            'assigned_to_id' =>$this->assigned_to_id,
-            'assigned_team' =>$this->assigned_team,
-            'date_submitted' =>$this->date_submitted,
-            'approval_date' =>$this->approval_date?->format('Y-m-d H:i:s'),
-            'assignment_date' =>$this->assignment_date,
-            'start_date' => $this->start_date,
+            'reporter_id' => $this->reporter_id,
+            'assigned_to_id' => $this->assigned_to_id,
+            'assigned_team' => $this->assigned_team,
             'due_date' => $this->due_date,
-            'completion_date' => $this->completion_date,
-            'review_date' => $this->review_date,
-            'estimated_effort' => $this->estimated_effort,
-            'actual_effort' => $this->actual_effort,
-            'sla_time_elapsed' => $this->sla_time_elapsed,
-            'sla_time_remaining' => $this->sla_time_remaining,
             'sla_breached' => $this->sla_breached,
             'approved_by' => $this->approved_by,
-            'rejection_reason' =>$this->rejection_reason,
-            'roi_impact' => $this->roi_impact,
-            'quality_impact' => $this->quality_impact,
+            'rejection_reason' => $this->rejection_reason,
             'post_implementation_notes' => $this->post_implementation_notes,
             'source_ticket_id' => $this->source_ticket_id,
             'is_direct_input' => $this->is_direct_input,

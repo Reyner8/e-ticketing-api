@@ -40,9 +40,7 @@ class FeatureResource extends JsonResource
                 'label' => $this->assigned_team->label(),
             ] : null,
             'sla_breached' => (bool) $this->sla_breached,
-            'date_submitted' => $this->date_submitted,
             'due_date' => $this->due_date,
-            'completion_date' => $this->completion_date,
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
         ]);

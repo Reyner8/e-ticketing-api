@@ -34,6 +34,8 @@ class MilestoneService
             'created_by' => Auth::id(),
         ]);
 
+        $this->syncFeatureRequestProgress($feature);
+
         $this->logService->log(
             loggable: $feature,
             action: ActivityAction::Created,
@@ -63,6 +65,8 @@ class MilestoneService
 
         $milestone->update($data);
 
+        $this->syncFeatureRequestProgress($milestone->featureRequest);
+
         return $milestone->load('creator');
     }
 
@@ -79,6 +83,8 @@ class MilestoneService
         }
 
         $milestone->update(['progress' => $progress]);
+
+        $this->syncFeatureRequestProgress($milestone->featureRequest);
 
         return $milestone->load('creator');
     }
@@ -121,7 +127,11 @@ class MilestoneService
             ]);
         }
 
+        $feature = $milestone->featureRequest;
+
         $milestone->delete();
+
+        $this->syncFeatureRequestProgress($feature);
     }
 
     //* Query
@@ -146,8 +156,7 @@ class MilestoneService
     // Helper
     private function syncFeatureRequestProgress(FeatureRequest $feature): void
     {
-        $overallProgress = $feature->calculateOverallProgress();
-
-        $feature->update(['progress' => $overallProgress]);
+        $feature->refresh();
+        $feature->syncProgressFromMilestones();
     }
 }

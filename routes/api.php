@@ -34,7 +34,6 @@ use App\Http\Controllers\Api\v1\StatusHistory\TicketStatusHistoryController;
 use App\Http\Controllers\Api\v1\SystemConfigurationController;
 use App\Http\Controllers\Api\v1\TeamWorkloadSnapshotController;
 use App\Http\Controllers\Api\v1\Ticket\MergedTicketController;
-use App\Http\Controllers\Api\v1\TimelineEntryController;
 use App\Http\Controllers\Api\v1\UserController;
 
 Route::prefix('v1')->group(function () {
@@ -94,10 +93,6 @@ Route::prefix('v1')->group(function () {
             //milestone routes
             Route::get('feature-requests/{feature}/milestones', [MilestoneController::class, 'index']);
             Route::get('feature-requests/{feature}/milestones/{milestone}', [MilestoneController::class, 'show']);
-
-            //timeline routes
-            Route::get('feature-requests/{feature}/timelines', [TimelineEntryController::class, 'index']);
-            Route::get('feature-requests/{feature}/timelines/{entry}', [TimelineEntryController::class, 'show']);
 
             //notification routes
             Route::get('/notifications', [NotificationController::class, 'index']);
@@ -216,13 +211,6 @@ Route::prefix('v1')->group(function () {
             Route::patch('feature-requests/{feature}/milestones/{milestone}/progress', [MilestoneController::class, 'updateProgress']);
             Route::patch('feature-requests/{feature}/milestones/{milestone}/complete', [MilestoneController::class, 'complete']);
             Route::delete('feature-requests/{feature}/milestones/{milestone}', [MilestoneController::class, 'destroy']);
-
-            //timeline routes
-            Route::post('feature-requests/{feature}/timelines', [TimelineEntryController::class, 'store']);
-            Route::put('feature-requests/{feature}/timelines/{entry}', [TimelineEntryController::class, 'update']);
-            Route::patch('feature-requests/{feature}/timelines/{entry}/progress', [TimelineEntryController::class, 'updateProgress']);
-            Route::patch('feature-requests/{feature}/timelines/{entry}/complete', [TimelineEntryController::class, 'complete']);
-            Route::delete('feature-requests/{feature}/timelines/{entry}', [TimelineEntryController::class, 'destroy']);
 
             //merge ticket routes
             Route::post('/tickets/{ticket}/merge', [MergedTicketController::class, 'mergeTicket']);

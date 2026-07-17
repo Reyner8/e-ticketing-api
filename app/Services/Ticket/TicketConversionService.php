@@ -18,6 +18,7 @@ use App\Services\Attachment\AttachmentService;
 use App\Services\ConversionHistoryService;
 use App\Services\Log\ActivityLogService;
 use App\Services\NotificationService;
+use App\Services\StatusHistoryService;
 use Illuminate\Database\QueryException;
 
 class TicketConversionService
@@ -27,6 +28,7 @@ class TicketConversionService
         private readonly NotificationService $notificationService,
         private readonly ConversionHistoryService $historyService,
         private readonly AttachmentService $attachmentService,
+        private readonly StatusHistoryService $statusHistoryService,
     ) {}
 
     public function convertToErrorReport(string $ticketId, array $data): ErrorReport
@@ -155,26 +157,20 @@ class TicketConversionService
                     'progress' => 0,
                     'reporter_id' => $ticket->reporter_id,
                     'assigned_to_id' => $ticket->assigned_to_id,
-                    'date_submitted' => $ticket->date_reported,
-                    'approval_date' => $data['approval_date'] ?? null,
-                    'assignment_date' => $data['assignment_date'] ?? null,
-                    'start_date' => $data['start_date'] ?? null,
                     'due_date' => $data['due_date'] ?? null,
-                    'completion_date' => $data['completion_date'] ?? null,
-                    'review_date' => $data['review_date'] ?? null,
-                    'estimated_effort' => $data['estimated_effort'] ?? null,
-                    'actual_effort' => $data['actual_effort'] ?? null,
-                    'sla_time_elapsed' => $data['sla_time_elapsed'] ?? null,
-                    'sla_time_remaining' => $data['sla_time_remaining'] ?? null,
                     'sla_breached' => $data['sla_breached'] ?? false,
                     'approved_by' => $data['approved_by'] ?? null,
                     'rejection_reason' => $data['rejection_reason'] ?? null,
-                    'roi_impact' => $data['roi_impact'] ?? null,
-                    'quality_impact' => $data['quality_impact'] ?? null,
                     'post_implementation_notes' => $data['post_implementation_notes'] ?? null,
                     'source_ticket_id' => $ticket->id,
                     'is_direct_input' => false,
                 ]);
+
+                $this->statusHistoryService->recordInitialStatus(
+                    $featureRequest,
+                    FeatureRequestStatus::PendingApproval->value,
+                    ['reason' => 'Converted from ticket']
+                );
 
                 // carry original evidence (e.g. public submission screenshots)
                 $this->attachmentService->copyToResource(

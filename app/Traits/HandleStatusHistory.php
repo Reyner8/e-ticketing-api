@@ -34,10 +34,11 @@ trait HandleStatusHistory
         $statusHistory = $this->getStatusHistoryService()->update(
             resource: $resource,
             newStatus: $request->validated('status'),
-            extra: [
+            extra: array_filter([
                 'reason' => $request->validated('reason'),
                 'notes' => $request->validated('notes'),
-            ]
+                'effective_at' => $request->validated('effective_at'),
+            ], fn ($value) => $value !== null && $value !== ''),
         );
 
         return ApiResponse::success(

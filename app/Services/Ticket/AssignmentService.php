@@ -16,6 +16,7 @@ use App\Models\FeatureRequest;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\NotificationService;
+use App\Services\StatusHistoryService;
 use Illuminate\Validation\ValidationException;
 use BackedEnum;
 use App\Enums\Priorities;
@@ -25,7 +26,8 @@ class AssignmentService
 {
     public function __construct(
         private readonly ActivityLogService $logService,
-        private readonly NotificationService $notificationService
+        private readonly NotificationService $notificationService,
+        private readonly StatusHistoryService $statusHistoryService,
     ) {}
 
     public function assignToUser(Model $resource, int $userId): Model
@@ -48,12 +50,23 @@ class AssignmentService
             : $resource->status;
 
         DB::transaction(function () use ($resource, $user, $previousAssignee, $previousStatus) {
-            $resource->update([
+            $newStatus = $this->resolveStatusAfterAssignment($resource);
+            $updates = [
                 'assigned_to_id' => $user->id,
-                'assignment_date' => now(),
-                'status' => $this->resolveStatusAfterAssignment($resource),
-                'due_date' => $this->calculateDueDate($resource->priority->value, now()),
-            ]);
+                'status' => $newStatus,
+            ];
+
+            if (! $resource instanceof FeatureRequest) {
+                $updates['assignment_date'] = now();
+            }
+
+            if ($resource instanceof FeatureRequest) {
+                $updates['due_date'] = $this->calculateDueDate($resource->priority->value, now());
+            } elseif ($resource instanceof Ticket || $resource instanceof ErrorReport) {
+                $updates['due_date'] = $this->calculateDueDate($resource->priority->value, now());
+            }
+
+            $resource->update($updates);
 
             $description = $previousAssignee
                 ? "Reassign from '{$previousAssignee}' to '{$user->name}'."
@@ -79,6 +92,15 @@ class AssignmentService
                     previousStatus: $previousStatus,
                     newStatus: $resource->status->value
                 );
+
+                if ($resource instanceof FeatureRequest) {
+                    $this->statusHistoryService->recordStatusChange(
+                        $resource,
+                        $previousStatus,
+                        $resource->status->value,
+                        ['reason' => 'Assigned to user']
+                    );
+                }
             }
 
             // notification
@@ -149,12 +171,23 @@ class AssignmentService
             : $resource->status;
 
         DB::transaction(function () use ($resource, $assignedTeam, $previousTeamLabel, $previousStatus) {
-            $resource->update([
+            $newStatus = $this->resolveStatusAfterAssignment($resource);
+            $updates = [
                 'assigned_team' => $assignedTeam->value,
-                'assignment_date' => now(),
-                'status' => $this->resolveStatusAfterAssignment($resource),
-                'due_date' => $this->calculateDueDate($resource->priority->value, now()),
-            ]);
+                'status' => $newStatus,
+            ];
+
+            if (! $resource instanceof FeatureRequest) {
+                $updates['assignment_date'] = now();
+            }
+
+            if ($resource instanceof FeatureRequest) {
+                $updates['due_date'] = $this->calculateDueDate($resource->priority->value, now());
+            } elseif ($resource instanceof Ticket || $resource instanceof ErrorReport) {
+                $updates['due_date'] = $this->calculateDueDate($resource->priority->value, now());
+            }
+
+            $resource->update($updates);
 
             $description = $previousTeamLabel
                 ? "Reassign from '{$previousTeamLabel}' to '{$assignedTeam->label()}'."
@@ -180,6 +213,15 @@ class AssignmentService
                     previousStatus: $previousStatus,
                     newStatus: $resource->status->value
                 );
+
+                if ($resource instanceof FeatureRequest) {
+                    $this->statusHistoryService->recordStatusChange(
+                        $resource,
+                        $previousStatus,
+                        $resource->status->value,
+                        ['reason' => 'Assigned to user']
+                    );
+                }
             }
 
             // notification
@@ -203,10 +245,11 @@ class AssignmentService
         $previousAssignee = $resource->assignedUser?->name;
 
         DB::transaction(function () use ($resource, $previousAssignee) {
-            $resource->update([
-                'assigned_to_id' => null,
-                'assignment_date' => null,
-            ]);
+            $updates = ['assigned_to_id' => null];
+            if (! $resource instanceof FeatureRequest) {
+                $updates['assignment_date'] = null;
+            }
+            $resource->update($updates);
 
             $this->logService->log(
                 loggable: $resource,
@@ -235,10 +278,11 @@ class AssignmentService
             : $resource->assigned_team;
 
         DB::transaction(function () use ($resource, $previousTeam) {
-            $resource->update([
-                'assigned_team' => null,
-                'assignment_date' => null,
-            ]);
+            $updates = ['assigned_team' => null];
+            if (! $resource instanceof FeatureRequest) {
+                $updates['assignment_date'] = null;
+            }
+            $resource->update($updates);
 
             $this->logService->log(
                 loggable: $resource,
@@ -309,8 +353,8 @@ class AssignmentService
     {
         return match (true) {
             $resource instanceof Ticket => TicketStatus::Assigned->value,
-            $resource instanceof FeatureRequest => ErrorReportStatus::Assigned->value,
-            $resource instanceof ErrorReport => FeatureRequestStatus::Assigned->value,
+            $resource instanceof FeatureRequest => FeatureRequestStatus::Assigned->value,
+            $resource instanceof ErrorReport => ErrorReportStatus::Assigned->value,
             default => 'assigned',
         };
     }

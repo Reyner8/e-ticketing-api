@@ -35,7 +35,7 @@ class UpdateMilestoneRequest extends FormRequest
         return [
             "title" => ['sometimes', 'string', 'max:200'],
             "description" => ['nullable', 'string'],
-            "target_date" => ['sometimes', 'date', 'after:today'],
+            "target_date" => ['sometimes', 'date', 'after_or_equal:today'],
             "progress" => ['sometimes', 'integer', 'min:0', 'max:100'],
         ];
     }

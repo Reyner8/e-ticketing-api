@@ -11,7 +11,7 @@ use App\Http\Resources\FeatureDetailResource;
 use App\Http\Resources\FeatureResource;
 use App\Models\FeatureRequest;
 use App\Services\FeatureRequestService;
-use Carbon\Carbon;
+use App\Services\StatusHistoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -67,7 +67,10 @@ class FeatureController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function __construct(private FeatureRequestService $service) {}
+    public function __construct(
+        private FeatureRequestService $service,
+        private StatusHistoryService $statusHistoryService,
+    ) {}
 
     public function store(StoreFeatureRequest $request): JsonResponse
     {
@@ -77,10 +80,15 @@ class FeatureController extends Controller
         $feature = FeatureRequest::create([
             ...$data,
             'reporter_id' => Auth::id(),
-            'date_submitted' => Carbon::now(),
             'status' => 'pending_approval',
             'progress' => 0,
         ]);
+
+        $this->statusHistoryService->recordInitialStatus(
+            $feature,
+            'pending_approval',
+            ['reason' => 'Feature request created']
+        );
 
         return ApiResponse::success(
             new FeatureDetailResource($feature),
