@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\ErrorReport;
 
-use App\Http\Resources\TagResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -46,7 +45,6 @@ class ErrorReportResource extends JsonResource
                 'label' => $this->assigned_team->label(),
             ] : null,
             'sla_breached' => (bool) $this->sla_breached,
-            'tags' => TagResource::collection($this->whenLoaded('tags')),
             'date_reported' => $this->date_reported?->format('Y-m-d H:i:s'),
             'due_date' => $this->due_date?->format('Y-m-d H:i:s'),
             'completion_date' => $this->completion_date?->format('Y-m-d H:i:s'),
