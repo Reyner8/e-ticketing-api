@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\DowntimeComponentRole;
 use App\Enums\DowntimeImpact;
 use App\Enums\DowntimeStatus;
 use App\Enums\DowntimeType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
@@ -19,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'duration',
     'impact',
     'reported_by',
+    'location_id',
     'description',
     'status',
     'root_cause',
@@ -37,21 +40,50 @@ class DowntimeRecord extends Model
         'end_time' => 'datetime',
         'duration' => 'integer',
         'affected_users' => 'integer',
-        'estimated_costs' => 'decimal:2',
+        'estimated_cost' => 'decimal:2',
     ];
 
-    // Relations
     public function reporter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reported_by');
     }
 
-    public function affectedSystems(): HasMany
+    public function location(): BelongsTo
     {
-        return $this->hasMany(DowntimeAffectedSystem::class, 'downtime_id')->orderBy('system_name');
+        return $this->belongsTo(DowntimeLocation::class, 'location_id');
     }
 
-    // Helpers
+    public function recordComponents(): HasMany
+    {
+        return $this->hasMany(DowntimeRecordComponent::class, 'downtime_id');
+    }
+
+    public function sourceComponents(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            DowntimeComponent::class,
+            'downtime_record_components',
+            'downtime_id',
+            'component_id'
+        )
+            ->wherePivot('role', DowntimeComponentRole::Source->value)
+            ->withTimestamps()
+            ->withPivot('role');
+    }
+
+    public function affectedComponents(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            DowntimeComponent::class,
+            'downtime_record_components',
+            'downtime_id',
+            'component_id'
+        )
+            ->wherePivot('role', DowntimeComponentRole::Affected->value)
+            ->withTimestamps()
+            ->withPivot('role');
+    }
+
     public function isOngoing(): bool
     {
         return $this->status === DowntimeStatus::Ongoing;
@@ -64,7 +96,7 @@ class DowntimeRecord extends Model
 
     public function calculateDuration(): ?int
     {
-        if (is_null($this->end_time)) {
+        if (is_null($this->end_time) || is_null($this->start_time)) {
             return null;
         }
 
@@ -80,7 +112,6 @@ class DowntimeRecord extends Model
         $hours = intdiv($this->duration, 60);
         $minutes = $this->duration % 60;
 
-
         if ($hours > 0 && $minutes > 0) {
             return "{$hours} hours {$minutes} minutes";
         }
@@ -90,10 +121,5 @@ class DowntimeRecord extends Model
         }
 
         return "{$minutes} minutes";
-    }
-
-    public function hasAffectedSystem(): bool
-    {
-        return $this->affectedSystems()->exists();
     }
 }

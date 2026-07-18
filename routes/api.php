@@ -20,8 +20,9 @@ use App\Http\Controllers\Api\v1\Comment\TicketCommentController;
 use App\Http\Controllers\Api\v1\Comment\FeatureRequestCommentController;
 use App\Http\Controllers\Api\v1\Comment\ErrorReportCommentController;
 use App\Http\Controllers\Api\v1\ConversionHistoryController;
-use App\Http\Controllers\Api\v1\DowntimeAffectedSystemController;
 use App\Http\Controllers\Api\v1\DashboardController;
+use App\Http\Controllers\Api\v1\DowntimeComponentController;
+use App\Http\Controllers\Api\v1\DowntimeLocationController;
 use App\Http\Controllers\Api\v1\DowntimeRecordController;
 use App\Http\Controllers\Api\v1\ErrorReportController;
 use App\Http\Controllers\Api\v1\ExportController;
@@ -89,6 +90,13 @@ Route::prefix('v1')->group(function () {
             //downtime record routes
             Route::get('downtime-records', [DowntimeRecordController::class, 'index']);
             Route::get('downtime-records/{downtimeRecord}', [DowntimeRecordController::class, 'show']);
+
+            //downtime master data (read)
+            Route::get('downtime-locations', [DowntimeLocationController::class, 'index']);
+            Route::get('downtime-locations/{downtimeLocation}', [DowntimeLocationController::class, 'show']);
+            Route::get('downtime-components', [DowntimeComponentController::class, 'index']);
+            Route::get('downtime-components/suggest-affected', [DowntimeComponentController::class, 'suggestAffected']);
+            Route::get('downtime-components/{downtimeComponent}', [DowntimeComponentController::class, 'show']);
 
             //milestone routes
             Route::get('feature-requests/{feature}/milestones', [MilestoneController::class, 'index']);
@@ -216,11 +224,17 @@ Route::prefix('v1')->group(function () {
             Route::post('/tickets/{ticket}/merge', [MergedTicketController::class, 'mergeTicket']);
             Route::delete('tickets/{ticket}/merge/{mergedTicketId}', [MergedTicketController::class, 'unmergeTicket']);
 
-            //downtime system affected routes
-            Route::get('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'index']);
-            Route::post('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'store']);
-            Route::put('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'sync']);
-            Route::delete('/downtime-records/{downtime}/affected-systems', [DowntimeAffectedSystemController::class, 'destroy']);
+            //downtime master data (write)
+            Route::post('downtime-locations', [DowntimeLocationController::class, 'store']);
+            Route::put('downtime-locations/{downtimeLocation}', [DowntimeLocationController::class, 'update']);
+            Route::patch('downtime-locations/{downtimeLocation}/deactivate', [DowntimeLocationController::class, 'deactivate']);
+            Route::delete('downtime-locations/{downtimeLocation}', [DowntimeLocationController::class, 'destroy']);
+
+            Route::post('downtime-components', [DowntimeComponentController::class, 'store']);
+            Route::put('downtime-components/{downtimeComponent}', [DowntimeComponentController::class, 'update']);
+            Route::put('downtime-components/{downtimeComponent}/dependencies', [DowntimeComponentController::class, 'syncDependencies']);
+            Route::patch('downtime-components/{downtimeComponent}/deactivate', [DowntimeComponentController::class, 'deactivate']);
+            Route::delete('downtime-components/{downtimeComponent}', [DowntimeComponentController::class, 'destroy']);
 
             //calendar event routes
             Route::post('/calendar-events/', [CalendarEventController::class, 'store']);
