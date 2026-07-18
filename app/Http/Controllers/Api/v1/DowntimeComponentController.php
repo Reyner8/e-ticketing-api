@@ -84,10 +84,18 @@ class DowntimeComponentController extends Controller
 
     public function suggestAffected(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'source_component_ids' => ['required', 'array', 'min:1'],
-            'source_component_ids.*' => ['integer', 'exists:downtime_components,id'],
-        ]);
+        $raw = $request->input('source_component_ids', []);
+        if (is_string($raw)) {
+            $raw = array_filter(array_map('trim', explode(',', $raw)), fn ($v) => $v !== '');
+        }
+
+        $validated = validator(
+            ['source_component_ids' => $raw],
+            [
+                'source_component_ids' => ['required', 'array', 'min:1'],
+                'source_component_ids.*' => ['integer', 'exists:downtime_components,id'],
+            ]
+        )->validate();
 
         $suggested = $this->service->suggestAffected($validated['source_component_ids']);
 
