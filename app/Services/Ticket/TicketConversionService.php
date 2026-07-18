@@ -61,14 +61,16 @@ class TicketConversionService
                     'start_date' => $data['start_date'] ?? null,
                     'due_date' => $data['due_date'] ?? null,
                     'completion_date' => $data['completion_date'] ?? null,
-                    'estimated_effort' => $data['estimated_effort'] ?? null,
-                    'actual_effort' => $data['actual_effort'] ?? null,
-                    'sla_time_elapsed' => $data['sla_time_elapsed'] ?? null,
-                    'sla_time_remaining' => $data['sla_time_remaining'] ?? null,
                     'sla_breached' => $data['sla_breached'] ?? false,
                     'source_ticket_id' => $ticket->id,
                     'is_direct_input' => false,
                 ]);
+
+                $this->statusHistoryService->recordInitialStatus(
+                    $errorReport,
+                    ErrorReportStatus::PendingApproval->value,
+                    ['reason' => 'Converted from ticket']
+                );
 
                 // carry original evidence (e.g. public submission screenshots)
                 $this->attachmentService->copyToResource(

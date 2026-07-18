@@ -93,7 +93,7 @@ class AssignmentService
                     newStatus: $resource->status->value
                 );
 
-                if ($resource instanceof FeatureRequest) {
+                if ($resource instanceof FeatureRequest || $resource instanceof ErrorReport) {
                     $this->statusHistoryService->recordStatusChange(
                         $resource,
                         $previousStatus,
@@ -214,12 +214,12 @@ class AssignmentService
                     newStatus: $resource->status->value
                 );
 
-                if ($resource instanceof FeatureRequest) {
+                if ($resource instanceof FeatureRequest || $resource instanceof ErrorReport) {
                     $this->statusHistoryService->recordStatusChange(
                         $resource,
                         $previousStatus,
                         $resource->status->value,
-                        ['reason' => 'Assigned to user']
+                        ['reason' => 'Assigned to team']
                     );
                 }
             }

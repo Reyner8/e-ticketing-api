@@ -34,7 +34,6 @@ class ConvertToErrorReportRequest extends FormRequest
             'assigned_team' => ['nullable', 'string', 'max:255', Rule::in(AssignedTeam::values())],
             'start_date' => 'nullable|date',
             'due_date' => 'nullable|date',
-            'estimated_effort' => 'nullable|numeric|decimal:0,2',
             'conversion_reason' => 'required|string'
         ];
     }

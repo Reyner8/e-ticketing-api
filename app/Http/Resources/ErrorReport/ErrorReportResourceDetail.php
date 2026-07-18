@@ -57,12 +57,6 @@ class ErrorReportResourceDetail extends JsonResource
             'completion_date' => $this->completion_date?->format('Y-m-d H:i:s'),
             'sla' => [
                 'breached' => $this->sla_breached,
-                'elapsed' => $this->sla_elapsed,
-                'time_remaining' => $this->sla_time_remaining,
-            ],
-            'effort' => [
-                'estimated' => $this->estimated_effort,
-                'actual' => $this->actual_effort
             ],
             'source' => [
                 'is_direct_input' => $this->is_direct_input,

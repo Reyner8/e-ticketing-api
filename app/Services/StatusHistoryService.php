@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\ErrorReportStatus;
+use App\Models\ErrorReport;
 use App\Models\FeatureRequest;
 use App\Models\StatusHistory;
 use App\Models\Ticket;
@@ -48,7 +50,19 @@ class StatusHistoryService
             : now();
 
         $history = DB::transaction(function () use ($resource, $previousStatus, $newStatus, $extra, $effectiveAt) {
-            $resource->update(['status' => $newStatus]);
+            $updates = ['status' => $newStatus];
+
+            if ($resource instanceof ErrorReport) {
+                if ($newStatus === ErrorReportStatus::InProgress->value && ! $resource->start_date) {
+                    $updates['start_date'] = $effectiveAt;
+                }
+
+                if ($newStatus === ErrorReportStatus::Completed->value) {
+                    $updates['completion_date'] = $effectiveAt;
+                }
+            }
+
+            $resource->update($updates);
 
             if ($resource instanceof FeatureRequest) {
                 $resource->syncProgressFromMilestones($newStatus);

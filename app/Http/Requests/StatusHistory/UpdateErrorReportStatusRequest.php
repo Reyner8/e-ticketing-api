@@ -32,6 +32,7 @@ class UpdateErrorReportStatusRequest extends FormRequest
             ],
             'reason' => ['nullable', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:1000'],
+            'effective_at' => ['required', 'date'],
         ];
     }
 }

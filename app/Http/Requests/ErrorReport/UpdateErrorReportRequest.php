@@ -42,9 +42,7 @@ class UpdateErrorReportRequest extends FormRequest
             'category' => ['sometimes', 'string', Rule::in(ErrorCategory::values())],
             'priority' => ['sometimes', 'string', Rule::in(Priorities::values())],
             'start_date' => ['nullable', 'date'],
-            'due_date' => ['nullable', 'date', 'after:now'],
-            'estimated_effort' => ['nullable', 'numeric', 'min:0'],
-            'actual_effort' => ['nullable', 'numeric', 'min:0'],
+            'due_date' => ['nullable', 'date', 'after_or_equal:today'],
         ];
     }
 }

@@ -42,7 +42,6 @@ class StoreErrorReportRequest extends FormRequest
             'priority' => ['required', 'string', Rule::in(Priorities::values())],
             'start_date' => ['nullable', 'date'],
             'due_date' => ['nullable', 'date', 'after:now'],
-            'estimated_effort' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

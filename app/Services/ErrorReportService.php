@@ -12,6 +12,10 @@ use Illuminate\Validation\ValidationException;
 
 class ErrorReportService
 {
+    public function __construct(
+        private readonly StatusHistoryService $statusHistoryService,
+    ) {}
+
     public function store(array $data): ErrorReport
     {
         $errorReport = ErrorReport::create([
@@ -25,12 +29,18 @@ class ErrorReportService
             'due_date' => null
         ]);
 
+        $this->statusHistoryService->recordInitialStatus(
+            $errorReport,
+            ErrorReportStatus::PendingApproval->value,
+            ['reason' => 'Error report created']
+        );
+
         return $errorReport->load(['reporter', 'assignedUser']);
     }
 
     public function update(ErrorReport $error, array $data): ErrorReport
     {
-        if ($error->status === ErrorReportStatus::Completed->value) {
+        if ($error->status === ErrorReportStatus::Completed) {
             throw ValidationException::withMessages([
                 'status' => ['Completed error report cannot be edited.']
             ]);
@@ -43,7 +53,7 @@ class ErrorReportService
 
     public function delete(ErrorReport $error): void
     {
-        if ($error->status === ErrorReportStatus::Completed->value) {
+        if ($error->status === ErrorReportStatus::Completed) {
             throw ValidationException::withMessages([
                 'status' => ['Completed error report cannot be deleted.']
             ]);

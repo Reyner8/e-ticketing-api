@@ -72,6 +72,15 @@ class ApprovalService
                 );
             }
 
+            if ($resource instanceof ErrorReport) {
+                $this->statusHistoryService->recordStatusChange(
+                    $resource,
+                    $previousStatus,
+                    ErrorReportStatus::Assigned->value,
+                    ['reason' => 'Approved by team lead']
+                );
+            }
+
             $this->logService->log(
                 loggable: $resource,
                 action: ActivityAction::Updated,
