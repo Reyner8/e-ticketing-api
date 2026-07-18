@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\TicketAlreadyConvertedException;
 use App\Exceptions\TicketCannotBeConvertedException;
+use App\Models\ConversionHistory;
 use App\Models\FeatureRequest;
 use App\Services\Attachment\AttachmentService;
 use App\Services\ConversionHistoryService;
@@ -239,20 +240,30 @@ class TicketConversionService
     {
         $year = now()->year;
         $model = $prefix === 'ERR' ? ErrorReport::class : FeatureRequest::class;
+        $targetType = $prefix === 'ERR'
+            ? ConversionTypes::ErrorReport->value
+            : ConversionTypes::FeatureRequest->value;
+        $pattern = "{$prefix}-{$year}-%";
 
-        $lastRecord = $model::whereYear('created_at', $year)
+        $lastRecordId = $model::where('id', 'like', $pattern)
             ->lockForUpdate()
             ->orderBy('id', 'desc')
-            ->first();
+            ->value('id');
 
-        if ($lastRecord) {
-            $lastNumber = (int) substr($lastRecord->id, -3);
-            $nextNumber = $lastNumber + 1;
-        } else {
-            $nextNumber = 1;
-        }
+        // Conversion history is retained after a target is deleted. Include it
+        // so an old ID is never reused and linked to orphaned status/activity.
+        $lastHistoricalId = ConversionHistory::where('target_type', $targetType)
+            ->where('target_id', 'like', $pattern)
+            ->lockForUpdate()
+            ->orderBy('target_id', 'desc')
+            ->value('target_id');
 
-        return sprintf('%s-%d-%03d', $prefix, $year, $nextNumber);
+        $lastNumber = max(
+            $lastRecordId ? (int) substr($lastRecordId, -3) : 0,
+            $lastHistoricalId ? (int) substr($lastHistoricalId, -3) : 0,
+        );
+
+        return sprintf('%s-%d-%03d', $prefix, $year, $lastNumber + 1);
     }
 
     private function validateConversion(Ticket $ticket): void
