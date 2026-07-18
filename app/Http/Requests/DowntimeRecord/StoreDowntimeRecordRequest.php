@@ -6,31 +6,26 @@ use App\Enums\DowntimeImpact;
 use App\Enums\DowntimeType;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class StoreDowntimeRecordRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    public function prepareForValidation()
+    public function prepareForValidation(): void
     {
         if ($this->filled('title')) {
             $this->merge([
-                'title' => Str::title(trim($this->title))
+                'title' => Str::title(trim($this->title)),
             ]);
         }
     }
 
     /**
-     * Get the validation rules that apply to the request.
-     *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
@@ -41,11 +36,17 @@ class StoreDowntimeRecordRequest extends FormRequest
             'reason' => ['required', 'string'],
             'start_time' => ['required', 'date'],
             'end_time' => ['nullable', 'date', 'after:start_time'],
-            'duration' => ['nullable', 'integer'],
             'impact' => ['required', 'string', 'max:50', Rule::in(DowntimeImpact::values())],
+            'location_id' => ['nullable', 'integer', Rule::exists('downtime_locations', 'id')->where('is_active', true)],
             'description' => ['nullable', 'string'],
+            'root_cause' => ['nullable', 'string'],
+            'preventive_measures' => ['nullable', 'string'],
             'affected_users' => ['nullable', 'integer', 'min:0'],
             'estimated_cost' => ['nullable', 'numeric', 'min:0'],
+            'source_component_ids' => ['required', 'array', 'min:1'],
+            'source_component_ids.*' => ['integer', 'distinct', Rule::exists('downtime_components', 'id')->where('is_active', true)],
+            'affected_component_ids' => ['nullable', 'array'],
+            'affected_component_ids.*' => ['integer', 'distinct', Rule::exists('downtime_components', 'id')->where('is_active', true)],
         ];
     }
 }
