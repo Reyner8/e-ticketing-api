@@ -9,12 +9,12 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Master data downtime untuk konteks rumah sakit.
+ * Master data downtime sesuai lingkungan aplikasi nyata.
  *
  * Aman dijalankan ulang (idempotent):
  * - Lokasi & komponen di-upsert berdasarkan `code`.
- * - Sisa master lama yang tidak dipakai riwayat downtime dihapus; yang masih
- *   dipakai dibiarkan agar riwayat tetap valid.
+ * - Master lama di luar daftar ini dihapus (termasuk yang pernah dipakai
+ *   riwayat: tautan record_components dilepas dulu supaya FK tidak gagal).
  * - Peta dependency dibangun ulang penuh (tabel mapping, bukan data riwayat).
  *
  * Jalankan: php artisan db:seed --class=DowntimeMasterSeeder
@@ -130,9 +130,11 @@ class DowntimeMasterSeeder extends Seeder
         DowntimeLocation::whereNotIn('code', $desiredCodes)
             ->get()
             ->each(function (DowntimeLocation $location) {
-                if (! $location->isReferenced()) {
-                    $location->delete();
-                }
+                // Lepas referensi dari record agar lokasi lama bisa dihapus.
+                DB::table('downtime_records')
+                    ->where('location_id', $location->id)
+                    ->update(['location_id' => null]);
+                $location->delete();
             });
     }
 
@@ -156,9 +158,15 @@ class DowntimeMasterSeeder extends Seeder
         DowntimeComponent::whereNotIn('code', $desiredCodes)
             ->get()
             ->each(function (DowntimeComponent $component) {
-                if (! $component->isReferenced()) {
-                    $component->delete();
-                }
+                // Lepas tautan riwayat + dependency, lalu hapus master lama.
+                DB::table('downtime_record_components')
+                    ->where('component_id', $component->id)
+                    ->delete();
+                DB::table('downtime_component_dependencies')
+                    ->where('source_component_id', $component->id)
+                    ->orWhere('affected_component_id', $component->id)
+                    ->delete();
+                $component->delete();
             });
     }
 
