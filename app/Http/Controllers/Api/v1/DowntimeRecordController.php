@@ -9,6 +9,7 @@ use App\Http\Requests\DowntimeRecord\StoreDowntimeRecordRequest;
 use App\Http\Requests\DowntimeRecord\UpdateDowntimeRecordRequest;
 use App\Http\Resources\DowntimeRecordResource;
 use App\Models\DowntimeRecord;
+use App\Services\DowntimeAnalyticsService;
 use App\Services\DowntimeRecordService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,8 +17,30 @@ use Illuminate\Http\Request;
 class DowntimeRecordController extends Controller
 {
     public function __construct(
-        private readonly DowntimeRecordService $service
+        private readonly DowntimeRecordService $service,
+        private readonly DowntimeAnalyticsService $analyticsService
     ) {}
+
+    public function analytics(Request $request): JsonResponse
+    {
+        $data = $this->analyticsService->summarize(
+            $request->only([
+                'from_date',
+                'to_date',
+                'location_id',
+                'component_id',
+                'category',
+                'type',
+                'status',
+                'impact',
+            ])
+        );
+
+        return ApiResponse::success(
+            $data,
+            'Downtime analytics retrieved successfully.'
+        );
+    }
 
     public function index(Request $request): JsonResponse
     {

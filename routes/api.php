@@ -88,6 +88,7 @@ Route::prefix('v1')->group(function () {
             Route::get('errors/{error}/status', [ErrorReportStatusHistoryController::class, 'index'])->name('errors.status');
 
             //downtime record routes
+            Route::get('downtime-records/analytics', [DowntimeRecordController::class, 'analytics']);
             Route::get('downtime-records', [DowntimeRecordController::class, 'index']);
             Route::get('downtime-records/{downtimeRecord}', [DowntimeRecordController::class, 'show']);
 
