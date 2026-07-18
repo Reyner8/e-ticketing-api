@@ -162,7 +162,7 @@ class ExportController extends Controller
                     'type',
                     'status',
                     'impact',
-                    'location',
+                    'locations',
                     'direct_sources',
                     'affected_components',
                     'reason',
@@ -176,7 +176,7 @@ class ExportController extends Controller
                 ],
                 DowntimeRecord::query()
                     ->with([
-                        'location:id,name',
+                        'locations:id,name',
                         'sourceComponents:id,name',
                         'affectedComponents:id,name',
                     ])
@@ -186,7 +186,9 @@ class ExportController extends Controller
                     ->when(isset($filters['to_date']) && $filters['to_date'] !== '', function ($q) use ($filters) {
                         $q->where('start_time', '<=', $filters['to_date'].' 23:59:59');
                     })
-                    ->when(isset($filters['location_id']) && $filters['location_id'] !== '', fn ($q) => $q->where('location_id', $filters['location_id']))
+                    ->when(isset($filters['location_id']) && $filters['location_id'] !== '', function ($q) use ($filters) {
+                        $q->whereHas('locations', fn ($inner) => $inner->where('downtime_locations.id', $filters['location_id']));
+                    })
                     ->when(isset($filters['type']) && $filters['type'] !== '', fn ($q) => $q->where('type', $filters['type']))
                     ->when(isset($filters['status']) && $filters['status'] !== '', fn ($q) => $q->where('status', $filters['status']))
                     ->when(isset($filters['impact']) && $filters['impact'] !== '', fn ($q) => $q->where('impact', $filters['impact']))
@@ -205,7 +207,7 @@ class ExportController extends Controller
                         $record->type?->value ?? $record->type,
                         $record->status?->value ?? $record->status,
                         $record->impact?->value ?? $record->impact,
-                        $record->location?->name,
+                        $record->locations->pluck('name')->implode('; '),
                         $record->sourceComponents->pluck('name')->implode('; '),
                         $record->affectedComponents->pluck('name')->implode('; '),
                         $record->reason,

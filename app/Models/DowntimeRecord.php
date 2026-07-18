@@ -21,7 +21,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'duration',
     'impact',
     'reported_by',
-    'location_id',
     'description',
     'status',
     'root_cause',
@@ -48,9 +47,14 @@ class DowntimeRecord extends Model
         return $this->belongsTo(User::class, 'reported_by');
     }
 
-    public function location(): BelongsTo
+    public function locations(): BelongsToMany
     {
-        return $this->belongsTo(DowntimeLocation::class, 'location_id');
+        return $this->belongsToMany(
+            DowntimeLocation::class,
+            'downtime_record_locations',
+            'downtime_id',
+            'location_id'
+        )->withTimestamps();
     }
 
     public function recordComponents(): HasMany

@@ -43,12 +43,12 @@ class DowntimeRecordResource extends JsonResource
                 'name' => $this->reporter->name,
                 'username' => $this->reporter->username,
             ] : null),
-            'location' => $this->whenLoaded('location', fn () => $this->location ? [
-                'id' => $this->location->id,
-                'code' => $this->location->code,
-                'name' => $this->location->name,
-                'is_active' => (bool) $this->location->is_active,
-            ] : null),
+            'locations' => $this->whenLoaded('locations', fn () => $this->locations->map(fn ($location) => [
+                'id' => $location->id,
+                'code' => $location->code,
+                'name' => $location->name,
+                'is_active' => (bool) $location->is_active,
+            ])->values()),
             'source_components' => $this->whenLoaded('sourceComponents', fn () => $this->sourceComponents->map($mapComponent)->values()),
             'affected_components' => $this->whenLoaded('affectedComponents', fn () => $this->affectedComponents->map($mapComponent)->values()),
             'description' => $this->description,

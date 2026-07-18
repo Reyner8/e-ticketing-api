@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class DowntimeLocation extends Model
 {
@@ -28,9 +28,14 @@ class DowntimeLocation extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function downtimeRecords(): HasMany
+    public function downtimeRecords(): BelongsToMany
     {
-        return $this->hasMany(DowntimeRecord::class, 'location_id');
+        return $this->belongsToMany(
+            DowntimeRecord::class,
+            'downtime_record_locations',
+            'location_id',
+            'downtime_id'
+        )->withTimestamps();
     }
 
     public function isReferenced(): bool

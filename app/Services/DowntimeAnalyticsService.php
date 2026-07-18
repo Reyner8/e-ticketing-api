@@ -29,7 +29,7 @@ class DowntimeAnalyticsService
 
         $records = $this->baseQuery($filters, $from, $to)
             ->with([
-                'location:id,code,name',
+                'locations:id,code,name',
                 'sourceComponents:id,code,name,category',
                 'affectedComponents:id,code,name,category',
             ])
@@ -66,18 +66,23 @@ class DowntimeAnalyticsService
         $affectedStats = $this->componentStats($records, DowntimeComponentRole::Affected, $periodMinutes, $to);
         $categoryStats = $this->categoryStats($records, $periodMinutes, $to);
 
-        $locationStats = $records
-            ->groupBy(fn (DowntimeRecord $r) => $r->location_id ?: 0)
-            ->map(function (Collection $group) use ($to) {
-                /** @var DowntimeRecord $first */
-                $first = $group->first();
-                return [
-                    'location_id' => $first->location_id,
-                    'location_name' => $first->location?->name ?? 'Unspecified',
-                    'incident_count' => $group->count(),
-                    'total_minutes' => (int) $group->sum(fn (DowntimeRecord $r) => $this->effectiveDurationMinutes($r, $to)),
-                ];
-            })
+        $locationBuckets = [];
+        foreach ($records as $record) {
+            $minutes = $this->effectiveDurationMinutes($record, $to);
+            foreach ($record->locations as $location) {
+                if (! isset($locationBuckets[$location->id])) {
+                    $locationBuckets[$location->id] = [
+                        'location_id' => $location->id,
+                        'location_name' => $location->name,
+                        'incident_count' => 0,
+                        'total_minutes' => 0,
+                    ];
+                }
+                $locationBuckets[$location->id]['incident_count']++;
+                $locationBuckets[$location->id]['total_minutes'] += $minutes;
+            }
+        }
+        $locationStats = collect($locationBuckets)
             ->sortByDesc('incident_count')
             ->values()
             ->all();
@@ -116,7 +121,9 @@ class DowntimeAnalyticsService
                 $q->whereNull('end_time')
                     ->orWhere('end_time', '>=', $from);
             })
-            ->when(isset($filters['location_id']) && $filters['location_id'] !== '', fn ($q) => $q->where('location_id', $filters['location_id']))
+            ->when(isset($filters['location_id']) && $filters['location_id'] !== '', function ($q) use ($filters) {
+                $q->whereHas('locations', fn ($inner) => $inner->where('downtime_locations.id', $filters['location_id']));
+            })
             ->when(isset($filters['type']) && $filters['type'] !== '', fn ($q) => $q->where('type', $filters['type']))
             ->when(isset($filters['status']) && $filters['status'] !== '', fn ($q) => $q->where('status', $filters['status']))
             ->when(isset($filters['impact']) && $filters['impact'] !== '', fn ($q) => $q->where('impact', $filters['impact']))

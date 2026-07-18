@@ -131,18 +131,17 @@ return new class extends Migration
         $now = now();
 
         $locations = [
-            ['code' => 'igd', 'name' => 'IGD', 'description' => 'Instalasi Gawat Darurat'],
-            ['code' => 'rawat-jalan', 'name' => 'Rawat Jalan', 'description' => 'Poliklinik rawat jalan'],
-            ['code' => 'rawat-inap', 'name' => 'Rawat Inap', 'description' => 'Bangsal rawat inap'],
-            ['code' => 'icu', 'name' => 'ICU / HCU', 'description' => 'Perawatan intensif'],
-            ['code' => 'ok', 'name' => 'Instalasi Bedah (OK)', 'description' => 'Kamar operasi'],
-            ['code' => 'farmasi', 'name' => 'Instalasi Farmasi', 'description' => 'Apotek / farmasi'],
-            ['code' => 'lab', 'name' => 'Laboratorium', 'description' => 'Laboratorium klinik'],
+            ['code' => 'pendaftaran-rekam-medis', 'name' => 'Pendaftaran / Rekam Medis', 'description' => 'Unit pendaftaran dan rekam medis'],
+            ['code' => 'farmasi-rawat-jalan', 'name' => 'Farmasi Rawat Jalan', 'description' => 'Pelayanan farmasi rawat jalan'],
+            ['code' => 'farmasi-rawat-inap', 'name' => 'Farmasi Rawat Inap', 'description' => 'Pelayanan farmasi rawat inap'],
+            ['code' => 'ugd', 'name' => 'UGD', 'description' => 'Unit Gawat Darurat'],
             ['code' => 'radiologi', 'name' => 'Radiologi', 'description' => 'Instalasi radiologi'],
-            ['code' => 'pendaftaran', 'name' => 'Pendaftaran & Kasir', 'description' => 'Front office pendaftaran dan kasir'],
-            ['code' => 'rekam-medis', 'name' => 'Rekam Medis', 'description' => 'Unit rekam medis'],
-            ['code' => 'server-room', 'name' => 'Ruang Server', 'description' => 'Data center / ruang server'],
-            ['code' => 'manajemen', 'name' => 'Gedung Manajemen', 'description' => 'Kantor administrasi / manajemen'],
+            ['code' => 'laboratorium', 'name' => 'Laboratorium', 'description' => 'Laboratorium klinik'],
+            ['code' => 'kasir', 'name' => 'Kasir', 'description' => 'Unit pelayanan kasir'],
+            ['code' => 'upi', 'name' => 'UPI', 'description' => 'Unit Perawatan Intensif'],
+            ['code' => 'ok', 'name' => 'OK', 'description' => 'Kamar operasi'],
+            ['code' => 'rawat-inap-carolus', 'name' => 'Rawat Inap Carolus', 'description' => 'Unit rawat inap Carolus'],
+            ['code' => 'rawat-inap-lukas', 'name' => 'Rawat Inap Lukas', 'description' => 'Unit rawat inap Lukas'],
         ];
 
         foreach ($locations as $location) {

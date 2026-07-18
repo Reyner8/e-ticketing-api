@@ -106,10 +106,25 @@ class DowntimeMonitoringTest extends TestCase
             'name' => 'Gedung Utama',
             'is_active' => true,
         ]);
+        $secondLocation = DowntimeLocation::create([
+            'code' => 'ward-test',
+            'name' => 'Rawat Inap',
+            'is_active' => true,
+        ]);
 
         $this->getJson('/api/v1/downtime-components/suggest-affected?source_component_ids='.$internet->id)
             ->assertOk()
             ->assertJsonCount(2, 'data');
+
+        $this->postJson('/api/v1/downtime-records', [
+            'title' => 'Missing Location',
+            'type' => DowntimeType::Unplanned->value,
+            'reason' => 'Validation check',
+            'start_time' => '2026-07-18 08:00:00',
+            'impact' => DowntimeImpact::High->value,
+            'source_component_ids' => [$internet->id],
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('location_ids');
 
         $create = $this->postJson('/api/v1/downtime-records', [
             'title' => 'Internet Outage',
@@ -117,14 +132,15 @@ class DowntimeMonitoringTest extends TestCase
             'reason' => 'ISP down',
             'start_time' => '2026-07-18 08:00:00',
             'impact' => DowntimeImpact::High->value,
-            'location_id' => $location->id,
+            'location_ids' => [$location->id, $secondLocation->id],
             'source_component_ids' => [$internet->id],
             'affected_component_ids' => [$simrs->id, $antrean->id],
         ]);
 
         $create->assertCreated()
             ->assertJsonPath('data.status.value', DowntimeStatus::Ongoing->value)
-            ->assertJsonPath('data.location.name', 'Gedung Utama')
+            ->assertJsonCount(2, 'data.locations')
+            ->assertJsonPath('data.locations.0.name', 'Gedung Utama')
             ->assertJsonCount(1, 'data.source_components')
             ->assertJsonCount(2, 'data.affected_components');
 
@@ -132,9 +148,12 @@ class DowntimeMonitoringTest extends TestCase
 
         $this->putJson("/api/v1/downtime-records/{$id}", [
             'title' => 'Internet Outage Updated',
+            'location_ids' => [$secondLocation->id],
             'source_component_ids' => [$internet->id],
             'affected_component_ids' => [$simrs->id],
         ])->assertOk()
+            ->assertJsonCount(1, 'data.locations')
+            ->assertJsonPath('data.locations.0.name', 'Rawat Inap')
             ->assertJsonCount(1, 'data.affected_components');
 
         $this->patchJson("/api/v1/downtime-records/{$id}/resolve", [
@@ -188,7 +207,7 @@ class DowntimeMonitoringTest extends TestCase
             'start_time' => now()->subHours(2)->format('Y-m-d H:i:s'),
             'end_time' => now()->subHour()->format('Y-m-d H:i:s'),
             'impact' => DowntimeImpact::Critical->value,
-            'location_id' => $location->id,
+            'location_ids' => [$location->id],
             'source_component_ids' => [$source->id],
             'affected_component_ids' => [$affected->id],
             'estimated_cost' => 1000,

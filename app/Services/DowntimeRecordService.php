@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\DowntimeComponentRole;
 use App\Enums\DowntimeStatus;
 use App\Models\DowntimeComponent;
+use App\Models\DowntimeLocation;
 use App\Models\DowntimeRecord;
 use App\Models\DowntimeRecordComponent;
 use App\Models\User;
@@ -34,7 +35,9 @@ class DowntimeRecordService
 
             $sourceIds = $this->normalizeComponentIds($data['source_component_ids'] ?? []);
             $affectedIds = $this->normalizeComponentIds($data['affected_component_ids'] ?? []);
+            $locationIds = $this->normalizeIds($data['location_ids'] ?? []);
             $this->assertActiveComponents([...$sourceIds, ...$affectedIds]);
+            $this->assertActiveLocations($locationIds);
             $this->assertNoRoleOverlap($sourceIds, $affectedIds);
 
             $status = $endTime
@@ -49,7 +52,6 @@ class DowntimeRecordService
                 'end_time' => $endTime,
                 'impact' => $data['impact'],
                 'reported_by' => Auth::id(),
-                'location_id' => $data['location_id'] ?? null,
                 'description' => $data['description'] ?? null,
                 'status' => $status,
                 'root_cause' => $data['root_cause'] ?? null,
@@ -60,6 +62,7 @@ class DowntimeRecordService
             ]);
 
             $this->syncRecordComponents($record, $sourceIds, $affectedIds);
+            $record->locations()->sync($locationIds);
             $this->notifyStaffAboutDowntime($record);
 
             return $this->loadRecord($record);
@@ -92,6 +95,7 @@ class DowntimeRecordService
                 ->except([
                     'source_component_ids',
                     'affected_component_ids',
+                    'location_ids',
                     'duration',
                 ])
                 ->all();
@@ -111,6 +115,12 @@ class DowntimeRecordService
             }
 
             $record->update($payload);
+
+            if (array_key_exists('location_ids', $data)) {
+                $locationIds = $this->normalizeIds($data['location_ids'] ?? []);
+                $this->assertActiveLocations($locationIds);
+                $record->locations()->sync($locationIds);
+            }
 
             if (array_key_exists('source_component_ids', $data) || array_key_exists('affected_component_ids', $data)) {
                 $sourceIds = array_key_exists('source_component_ids', $data)
@@ -177,7 +187,9 @@ class DowntimeRecordService
             ->when(isset($filters['type']) && $filters['type'] !== '', fn ($q) => $q->where('type', $filters['type']))
             ->when(isset($filters['status']) && $filters['status'] !== '', fn ($q) => $q->where('status', $filters['status']))
             ->when(isset($filters['impact']) && $filters['impact'] !== '', fn ($q) => $q->where('impact', $filters['impact']))
-            ->when(isset($filters['location_id']) && $filters['location_id'] !== '', fn ($q) => $q->where('location_id', $filters['location_id']))
+            ->when(isset($filters['location_id']) && $filters['location_id'] !== '', function ($q) use ($filters) {
+                $q->whereHas('locations', fn ($inner) => $inner->where('downtime_locations.id', $filters['location_id']));
+            })
             ->when(isset($filters['component_id']) && $filters['component_id'] !== '', function ($q) use ($filters) {
                 $q->whereHas('recordComponents', fn ($inner) => $inner->where('component_id', $filters['component_id']));
             })
@@ -203,7 +215,7 @@ class DowntimeRecordService
     {
         return [
             'reporter:id,name,username',
-            'location:id,code,name,is_active',
+            'locations:id,code,name,is_active',
             'sourceComponents:id,code,name,category,is_active',
             'affectedComponents:id,code,name,category,is_active',
         ];
@@ -243,12 +255,37 @@ class DowntimeRecordService
 
     private function normalizeComponentIds(array $ids): array
     {
+        return $this->normalizeIds($ids);
+    }
+
+    private function normalizeIds(array $ids): array
+    {
         return collect($ids)
             ->map(fn ($id) => (int) $id)
             ->filter(fn ($id) => $id > 0)
             ->unique()
             ->values()
             ->all();
+    }
+
+    private function assertActiveLocations(array $ids): void
+    {
+        if ($ids === []) {
+            throw ValidationException::withMessages([
+                'location_ids' => ['Select at least one active location.'],
+            ]);
+        }
+
+        $activeCount = DowntimeLocation::query()
+            ->whereIn('id', $ids)
+            ->where('is_active', true)
+            ->count();
+
+        if ($activeCount !== count($ids)) {
+            throw ValidationException::withMessages([
+                'location_ids' => ['All selected locations must exist and be active.'],
+            ]);
+        }
     }
 
     private function assertActiveComponents(array $ids): void
