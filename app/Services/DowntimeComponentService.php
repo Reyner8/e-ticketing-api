@@ -114,12 +114,20 @@ class DowntimeComponentService
             return collect();
         }
 
+        $affectedIds = DB::table('downtime_component_dependencies')
+            ->whereIn('source_component_id', $sourceComponentIds)
+            ->pluck('affected_component_id')
+            ->unique()
+            ->reject(fn ($id) => $sourceComponentIds->contains((int) $id))
+            ->values();
+
+        if ($affectedIds->isEmpty()) {
+            return collect();
+        }
+
         return DowntimeComponent::query()
             ->where('is_active', true)
-            ->whereHas('defaultSourceComponents', function ($q) use ($sourceComponentIds) {
-                $q->whereIn('downtime_components.id', $sourceComponentIds);
-            })
-            ->whereNotIn('id', $sourceComponentIds)
+            ->whereIn('id', $affectedIds)
             ->orderBy('name')
             ->get(['id', 'code', 'name', 'category', 'is_active']);
     }
