@@ -8,7 +8,6 @@ use App\Models\DowntimeRecord;
 use App\Models\Notification;
 use App\Models\Ticket;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Validation\ValidationException;
 
 class NotificationService
 {
@@ -162,13 +161,9 @@ class NotificationService
             abort(403, 'This notification does not belong to you.');
         }
 
-        if ($notification->is_read) {
-            throw ValidationException::withMessages([
-                'is_read' => ['Notification is already mark as read.']
-            ]);
+        if (! $notification->is_read) {
+            $notification->update(['is_read' => true]);
         }
-
-        $notification->update(['is_read' => true]);
 
         return $notification;
     }

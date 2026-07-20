@@ -37,6 +37,9 @@ class TeamWorkloadSnapshotResource extends JsonResource
                 ]: null,
                 'sla_compliance' => $this->sla_compliance ? (float) $this->sla_compliance : null,
             ],
+            'workload_percentage' => $this->workload_percentage !== null
+                ? (float) $this->workload_percentage
+                : null,
             'snapshot_date' => $this->snapshot_date?->format('Y-m-d'),
             'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
         ];

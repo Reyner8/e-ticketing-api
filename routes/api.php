@@ -136,10 +136,14 @@ Route::prefix('v1')->group(function () {
             Route::get('/calendar-events/{event}', [CalendarEventController::class, 'show']);
         });
 
-        Route::middleware('role:admin')->group(function () {
+        // Read user list for assignment pickers (admin + team_lead). Writes stay admin-only.
+        Route::middleware('role:admin,team_lead')->group(function () {
             Route::get('/users', [UserController::class, 'index']);
-            Route::post('/users', [UserController::class, 'store']);
             Route::get('/users/{user}', [UserController::class, 'show']);
+        });
+
+        Route::middleware('role:admin')->group(function () {
+            Route::post('/users', [UserController::class, 'store']);
             Route::put('/users/{user}', [UserController::class, 'update']);
             Route::delete('/users/{user}', [UserController::class, 'destroy']);
             Route::patch('/users/{user}/toggle-active', [UserController::class, 'toggleActive']);
@@ -203,11 +207,6 @@ Route::prefix('v1')->group(function () {
             Route::put('/feature-requests/{feature}', [FeatureController::class, 'update'])->name('feature-requests.update');
             Route::delete('/feature-requests/{feature}', [FeatureController::class, 'destroy'])->name('feature-requests.delete');
 
-            //activity log routes
-            Route::get('tickets/{ticket}/activity-logs', [ActivityLogController::class, 'ticket']);
-            Route::get('errors/{error}/activity-logs', [ActivityLogController::class, 'errorReport']);
-            Route::get('features/{feature}/activity-logs', [ActivityLogController::class, 'featureRequest']);
-
             //downtime record routes
             Route::post('downtime-records', [DowntimeRecordController::class, 'store']);
             Route::put('downtime-records/{downtimeRecord}', [DowntimeRecordController::class, 'update']);
@@ -248,11 +247,17 @@ Route::prefix('v1')->group(function () {
             Route::get('/system-configuration/{config}', [SystemConfigurationController::class, 'show']);
             Route::post('/system-configuration', [SystemConfigurationController::class, 'store']);
             Route::put('/system-configuration/{config}', [SystemConfigurationController::class, 'update']);
-            Route::put('/system-configuration/key/{key}', [SystemConfigurationController::class, 'upsert']);
+            Route::put('/system-configuration/key/{key}', [SystemConfigurationController::class, 'upsertByKey']);
             Route::delete('/system-configuration/{config}', [SystemConfigurationController::class, 'destroy']);
             Route::post('/system-configuration/cache/clear', [SystemConfigurationController::class, 'clearCache']);
+        });
 
-            //team workload snapshot routes
+        // Shared operational reads for IT staff + team leads (admin bypasses role middleware).
+        Route::middleware('role:it_staff,team_lead')->group(function () {
+            Route::get('tickets/{ticket}/activity-logs', [ActivityLogController::class, 'ticket']);
+            Route::get('errors/{error}/activity-logs', [ActivityLogController::class, 'errorReport']);
+            Route::get('features/{feature}/activity-logs', [ActivityLogController::class, 'featureRequest']);
+
             Route::get('/team-workload', [TeamWorkloadSnapshotController::class, 'index']);
             Route::get('/team-workload/latest', [TeamWorkloadSnapshotController::class, 'latest']);
             Route::get('/team-workload/compare', [TeamWorkloadSnapshotController::class, 'compare']);

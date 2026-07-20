@@ -28,7 +28,12 @@ class DashboardController extends Controller
         ];
 
         $snapshots = $this->workloadService->getLatestPerTeam();
-        $downtimeMinutes = (int) DowntimeRecord::query()->sum('duration');
+        $monthStart = now()->startOfMonth();
+        $downtimeMinutes = (int) DowntimeRecord::query()
+            ->where('start_time', '>=', $monthStart)
+            ->sum('duration');
+        $periodHours = max(1, $monthStart->diffInHours(now()));
+        $uptimePercent = round(max(0, min(100, 100 - (($downtimeMinutes / 60) / $periodHours) * 100)), 1);
 
         return ApiResponse::success([
             'total_tickets' => Ticket::count(),
@@ -38,9 +43,17 @@ class DashboardController extends Controller
             'critical_tickets' => Ticket::where('priority', 'critical')->count(),
             'active_downtimes' => DowntimeRecord::where('status', DowntimeStatus::Ongoing->value)->count(),
             'downtime_hours' => round($downtimeMinutes / 60, 1),
+            'uptime_percent' => $uptimePercent,
             'average_resolution_time' => round((float) $snapshots->avg('average_resolution_time'), 2),
             'sla_compliance' => (int) round((float) $snapshots->avg('sla_compliance')),
-            'user_satisfaction_score' => 4.2,
+            'user_satisfaction_score' => null,
+            'status_breakdown' => [
+                'in_progress' => Ticket::where('status', TicketStatus::InProgress->value)->count(),
+                'resolved' => Ticket::whereIn('status', [
+                    TicketStatus::Resolved->value,
+                    TicketStatus::Closed->value,
+                ])->count(),
+            ],
         ], 'Dashboard stats retrieved successfully.');
     }
 }

@@ -26,7 +26,20 @@ class FeatureDetailResource extends JsonResource
             'progress' => $this->progress,
             'reporter_id' => $this->reporter_id,
             'assigned_to_id' => $this->assigned_to_id,
-            'assigned_team' => $this->assigned_team,
+            'reporter' => $this->whenLoaded('reporter', fn () => $this->reporter ? [
+                'id' => $this->reporter->id,
+                'name' => $this->reporter->name,
+                'username' => $this->reporter->username,
+            ] : null),
+            'assigned_user' => $this->whenLoaded('assignee', fn () => $this->assignee ? [
+                'id' => $this->assignee->id,
+                'name' => $this->assignee->name,
+                'username' => $this->assignee->username,
+            ] : null),
+            'assigned_team' => $this->assigned_team ? [
+                'value' => $this->assigned_team->value,
+                'label' => $this->assigned_team->label(),
+            ] : null,
             'due_date' => $this->due_date,
             'sla_breached' => $this->sla_breached,
             'approved_by' => $this->approved_by,
