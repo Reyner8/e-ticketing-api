@@ -47,7 +47,10 @@ class AppServiceProvider extends ServiceProvider
             'ticket' => Ticket::class,
             'error_report' => ErrorReport::class,
             'feature_request' => FeatureRequest::class,
-            'comment' => Comment::class
+            'comment' => Comment::class,
+            'backup_restore_test' => \App\Models\BackupRestoreTest::class,
+            'server_room_visitor' => \App\Models\ServerRoomVisitor::class,
+            'server_room_inspection' => \App\Models\ServerRoomInspection::class,
         ]);
     }
 }

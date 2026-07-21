@@ -9,8 +9,12 @@ use App\Http\Controllers\Api\v1\Attachment\CommentAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\ErrorReportAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\FeatureRequestAttachmentController;
 use App\Http\Controllers\Api\v1\Attachment\TicketAttachmentController;
+use App\Http\Controllers\Api\v1\Attachment\BackupRestoreTestAttachmentController;
+use App\Http\Controllers\Api\v1\BackupRestoreTestController;
 use App\Http\Controllers\Api\v1\CalendarEventController;
 use App\Http\Controllers\Api\v1\Comment\MentionController;
+use App\Http\Controllers\Api\v1\ServerRoomInspectionController;
+use App\Http\Controllers\Api\v1\ServerRoomVisitorController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\TicketController;
@@ -134,10 +138,22 @@ Route::prefix('v1')->group(function () {
             Route::get('/calendar-events/calendar', [CalendarEventController::class, 'calendar']);
             Route::get('/calendar-events/upcoming', [CalendarEventController::class, 'upcoming']);
             Route::get('/calendar-events/{event}', [CalendarEventController::class, 'show']);
+
+            // Ops logging — read for all authenticated roles (sidebar hides from reporter)
+            Route::get('/backup-restore-tests', [BackupRestoreTestController::class, 'index']);
+            Route::get('/backup-restore-tests/{restoreTest}', [BackupRestoreTestController::class, 'show']);
+            Route::apiResource('backup-restore-tests.attachments', BackupRestoreTestAttachmentController::class)
+                ->only(['index', 'store', 'destroy']);
+
+            Route::get('/server-room-visitors', [ServerRoomVisitorController::class, 'index']);
+            Route::get('/server-room-visitors/{visitor}', [ServerRoomVisitorController::class, 'show']);
+
+            Route::get('/server-room-inspections', [ServerRoomInspectionController::class, 'index']);
+            Route::get('/server-room-inspections/{inspection}', [ServerRoomInspectionController::class, 'show']);
         });
 
-        // Read user list for assignment pickers (admin + team_lead). Writes stay admin-only.
-        Route::middleware('role:admin,team_lead')->group(function () {
+        // Read user list for assignment / escort pickers.
+        Route::middleware('role:admin,team_lead,it_staff')->group(function () {
             Route::get('/users', [UserController::class, 'index']);
             Route::get('/users/{user}', [UserController::class, 'show']);
         });
@@ -240,6 +256,20 @@ Route::prefix('v1')->group(function () {
             Route::post('/calendar-events/', [CalendarEventController::class, 'store']);
             Route::post('/calendar-events/{event}', [CalendarEventController::class, 'update']);
             Route::delete('/calendar-events/{event}', [CalendarEventController::class, 'destroy']);
+
+            // Ops logging writes
+            Route::post('/backup-restore-tests', [BackupRestoreTestController::class, 'store']);
+            Route::put('/backup-restore-tests/{restoreTest}', [BackupRestoreTestController::class, 'update']);
+            Route::delete('/backup-restore-tests/{restoreTest}', [BackupRestoreTestController::class, 'destroy']);
+
+            Route::post('/server-room-visitors', [ServerRoomVisitorController::class, 'store']);
+            Route::put('/server-room-visitors/{visitor}', [ServerRoomVisitorController::class, 'update']);
+            Route::patch('/server-room-visitors/{visitor}/checkout', [ServerRoomVisitorController::class, 'checkout']);
+            Route::delete('/server-room-visitors/{visitor}', [ServerRoomVisitorController::class, 'destroy']);
+
+            Route::post('/server-room-inspections', [ServerRoomInspectionController::class, 'store']);
+            Route::put('/server-room-inspections/{inspection}', [ServerRoomInspectionController::class, 'update']);
+            Route::delete('/server-room-inspections/{inspection}', [ServerRoomInspectionController::class, 'destroy']);
 
             //system configuration routes
             Route::get('/system-configuration', [SystemConfigurationController::class, 'index']);
