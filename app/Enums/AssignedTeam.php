@@ -11,9 +11,9 @@ enum AssignedTeam: string
     public function label(): string
     {
         return match ($this) {
-            self::Programmer => 'Programmer Team',
-            self::Network => 'Network Team',
-            self::Hardware => 'Hardware Team',
+            self::Programmer => 'Software Engineer',
+            self::Network => 'Network Engineer',
+            self::Hardware => 'Network Engineer',
         };
     }
 
