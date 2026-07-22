@@ -8,6 +8,8 @@ use App\Models\ErrorReport;
 use App\Models\FeatureRequest;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\QualityIndicatorService;
+use App\Services\StaffPerformanceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,7 +17,12 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExportController extends Controller
 {
-    private const DATASETS = ['tickets', 'errors', 'features', 'downtimes', 'users'];
+    private const DATASETS = ['tickets', 'errors', 'features', 'downtimes', 'users', 'staff-performance', 'quality-indicators'];
+
+    public function __construct(
+        private readonly StaffPerformanceService $staffPerformance,
+        private readonly QualityIndicatorService $qualityIndicator,
+    ) {}
 
     public function export(Request $request, string $dataset): Response
     {
@@ -25,18 +32,31 @@ class ExportController extends Controller
             abort(403, 'Only administrators can export users.');
         }
 
+        if (in_array($dataset, ['staff-performance', 'quality-indicators'], true)) {
+            $role = $request->user()?->role?->value;
+            if (! in_array($role, ['admin', 'team_lead', 'it_staff'], true)) {
+                abort(403, 'Access Forbidden');
+            }
+        }
+
         $format = $request->query('format', 'csv');
         abort_unless(in_array($format, ['csv', 'excel', 'pdf'], true), 422, 'Invalid export format.');
 
         $filters = $request->only([
             'from_date',
             'to_date',
+            'from',
+            'to',
+            'team',
+            'user_id',
+            'section',
             'location_id',
             'component_id',
             'category',
             'type',
             'status',
             'impact',
+            'application',
         ]);
 
         return match ($format) {
@@ -235,6 +255,17 @@ class ExportController extends Controller
                 ])->all(),
                 'Users Export',
             ],
+            'staff-performance' => $this->staffPerformance->exportRows([
+                'from' => $filters['from'] ?? $filters['from_date'] ?? null,
+                'to' => $filters['to'] ?? $filters['to_date'] ?? null,
+                'team' => $filters['team'] ?? null,
+                'user_id' => $filters['user_id'] ?? null,
+                'section' => $filters['section'] ?? 'all',
+            ]),
+            'quality-indicators' => $this->qualityIndicator->exportRows([
+                'application' => $filters['application'] ?? null,
+                'user_id' => $filters['user_id'] ?? null,
+            ]),
         };
     }
 }

@@ -39,6 +39,8 @@ use App\Http\Controllers\Api\v1\StatusHistory\FeatureRequestStatusHistoryControl
 use App\Http\Controllers\Api\v1\StatusHistory\TicketStatusHistoryController;
 use App\Http\Controllers\Api\v1\SystemConfigurationController;
 use App\Http\Controllers\Api\v1\TeamWorkloadSnapshotController;
+use App\Http\Controllers\Api\v1\StaffPerformanceController;
+use App\Http\Controllers\Api\v1\QualityIndicatorController;
 use App\Http\Controllers\Api\v1\Ticket\MergedTicketController;
 use App\Http\Controllers\Api\v1\UserController;
 
@@ -305,6 +307,9 @@ Route::prefix('v1')->group(function () {
             Route::get('/team-workload/{team}/history', [TeamWorkloadSnapshotController::class, 'history']);
             Route::get('/team-workload/{snapshot}', [TeamWorkloadSnapshotController::class, 'show']);
             Route::post('/team-workload/generate', [TeamWorkloadSnapshotController::class, 'generate']);
+
+            Route::get('/staff-performance', StaffPerformanceController::class);
+            Route::get('/quality-indicators/feature-requests', [QualityIndicatorController::class, 'featureRequests']);
         });
     });
 });
