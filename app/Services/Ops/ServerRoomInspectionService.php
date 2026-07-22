@@ -12,7 +12,16 @@ use Illuminate\Validation\ValidationException;
 
 class ServerRoomInspectionService
 {
-    public const CHECKLIST_KEYS = ['ups', 'alarm', 'cable_rack'];
+    /** Peralatan ruang server yang dicek per inspeksi. */
+    public const CHECKLIST_KEYS = [
+        'ups',
+        'cable',
+        'rack',
+        'ac',
+        'pc_server',
+        'mikrotik',
+        'switch',
+    ];
 
     public function getAll(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
