@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests\BackupRestoreTest;
 
+use App\Enums\BackupSource;
 use App\Enums\RestoreTestResult;
 use App\Enums\RestoreType;
+use App\Enums\TestEnvironment;
+use App\Services\ApplicationService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -19,11 +22,11 @@ class StoreBackupRestoreTestRequest extends FormRequest
         return [
             'test_date' => ['required', 'date'],
             'performed_by' => ['nullable', 'integer', 'exists:users,id'],
-            'application_system' => ['required', 'string', 'max:200'],
+            'application_system' => ['required', 'string', 'max:50', ApplicationService::activeCodeExistsRule()],
             'restore_type' => ['required', 'string', Rule::in(RestoreType::values())],
             'backup_datetime' => ['nullable', 'date'],
-            'backup_source' => ['nullable', 'string', 'max:500'],
-            'test_environment' => ['required', 'string', 'max:200'],
+            'backup_source' => ['nullable', 'string', Rule::in(BackupSource::values())],
+            'test_environment' => ['required', 'string', Rule::in(TestEnvironment::values())],
             'result' => ['required', 'string', Rule::in(RestoreTestResult::values())],
             'notes' => ['nullable', 'string'],
             'follow_up' => ['nullable', 'string'],
