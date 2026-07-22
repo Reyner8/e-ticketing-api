@@ -20,7 +20,6 @@ class UpdateServerRoomVisitorRequest extends FormRequest
             'exit_at' => ['nullable', 'date', 'after_or_equal:entry_at'],
             'visitor_name' => ['sometimes', 'string', 'max:200'],
             'unit_or_vendor' => ['sometimes', 'string', 'max:200'],
-            'identity_document' => ['sometimes', 'string', 'max:200'],
             'purpose' => ['sometimes', 'string', 'max:500'],
             'escorted_by' => ['sometimes', 'integer', 'exists:users,id'],
             'notes' => ['nullable', 'string'],

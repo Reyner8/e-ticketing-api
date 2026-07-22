@@ -33,7 +33,6 @@ return new class extends Migration
             $table->dateTime('exit_at')->nullable();
             $table->string('visitor_name', 200);
             $table->string('unit_or_vendor', 200);
-            $table->string('identity_document', 200);
             $table->string('purpose', 500);
             $table->foreignId('escorted_by')->constrained('users')->cascadeOnDelete();
             $table->text('notes')->nullable();

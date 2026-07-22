@@ -36,8 +36,7 @@ class ServerRoomVisitorService
                         $inner->where('id', 'like', $term)
                             ->orWhere('visitor_name', 'like', $term)
                             ->orWhere('unit_or_vendor', 'like', $term)
-                            ->orWhere('purpose', 'like', $term)
-                            ->orWhere('identity_document', 'like', $term);
+                            ->orWhere('purpose', 'like', $term);
                     });
                 }
             )

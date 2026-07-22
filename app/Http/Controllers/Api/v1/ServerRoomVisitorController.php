@@ -64,10 +64,10 @@ class ServerRoomVisitorController extends Controller
     public function checkout(Request $request, ServerRoomVisitor $visitor): JsonResponse
     {
         $validated = $request->validate([
-            'exit_at' => ['nullable', 'date'],
+            'exit_at' => ['required', 'date'],
         ]);
 
-        $visitor = $this->service->checkout($visitor, $validated['exit_at'] ?? null);
+        $visitor = $this->service->checkout($visitor, $validated['exit_at']);
 
         return ApiResponse::success(
             new ServerRoomVisitorResource($visitor),

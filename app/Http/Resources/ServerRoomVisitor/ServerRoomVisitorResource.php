@@ -15,7 +15,6 @@ class ServerRoomVisitorResource extends JsonResource
             'exit_at' => $this->exit_at?->format('Y-m-d H:i:s'),
             'visitor_name' => $this->visitor_name,
             'unit_or_vendor' => $this->unit_or_vendor,
-            'identity_document' => $this->identity_document,
             'purpose' => $this->purpose,
             'escorted_by' => $this->escort ? [
                 'id' => $this->escort->id,

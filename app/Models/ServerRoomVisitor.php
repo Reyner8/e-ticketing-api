@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'exit_at',
     'visitor_name',
     'unit_or_vendor',
-    'identity_document',
     'purpose',
     'escorted_by',
     'notes',
