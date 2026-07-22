@@ -33,7 +33,7 @@ class ApprovalResource extends JsonResource
                     'username' => $this->approver->username,
                 ]: null,
 
-                'processed_at' => $this->approval_date->format('Y-m-d H:i:s'),
+                'processed_at' => $this->approval_date?->format('Y-m-d H:i:s'),
                 'rejection_reason' => $this->rejection_reason,
             ],
         ];
