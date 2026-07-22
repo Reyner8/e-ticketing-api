@@ -7,7 +7,6 @@ use App\Enums\AssignedTeam;
 use App\Enums\FeatureRequestStatus;
 use App\Enums\Priorities;
 use App\Enums\RequestType;
-use App\Enums\TargetApplication;
 use App\Observers\FeatureRequestObserver;
 use App\Traits\HasActivityLog;
 use App\Traits\HasApproval;
@@ -58,7 +57,6 @@ class FeatureRequest extends Model
         'assigned_team' => AssignedTeam::class,
         'priority' => Priorities::class,
         'request_type' => RequestType::class,
-        'target_application' => TargetApplication::class,
         'approval_status' => ApprovalStatus::class,
         'due_date' => 'datetime',
     ];

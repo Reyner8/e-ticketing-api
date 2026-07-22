@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,10 +15,11 @@ class FeatureDetailResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'request_type' => $this->request_type,
-            'target_application' => $this->target_application ? [
-                'value' => $this->target_application->value,
-                'label' => $this->target_application->label(),
-            ] : null,
+            'target_application' => Application::toOption(
+                is_object($this->target_application)
+                    ? $this->target_application->value
+                    : $this->target_application
+            ),
             'priority' => $this->priority,
             'status' => $this->status,
             'approval_status' => $this->approval_status instanceof \App\Enums\ApprovalStatus
@@ -47,8 +49,8 @@ class FeatureDetailResource extends JsonResource
             'post_implementation_notes' => $this->post_implementation_notes,
             'source_ticket_id' => $this->source_ticket_id,
             'is_direct_input' => $this->is_direct_input,
-            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
-            'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
+            'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ];
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\v1\ActivityLogController;
+use App\Http\Controllers\Api\v1\ApplicationController;
 use App\Http\Controllers\Api\v1\ApprovalController;
 use App\Http\Controllers\Api\v1\Assignment\ErrorReportAssignmentController;
 use App\Http\Controllers\Api\v1\Assignment\FeatureRequestAssignmentController;
@@ -102,6 +103,10 @@ Route::prefix('v1')->group(function () {
             Route::get('downtime-components', [DowntimeComponentController::class, 'index']);
             Route::get('downtime-components/suggest-affected', [DowntimeComponentController::class, 'suggestAffected']);
             Route::get('downtime-components/{downtimeComponent}', [DowntimeComponentController::class, 'show']);
+
+            // shared application/system master (read)
+            Route::get('applications', [ApplicationController::class, 'index']);
+            Route::get('applications/{application}', [ApplicationController::class, 'show']);
 
             //milestone routes
             Route::get('feature-requests/{feature}/milestones', [MilestoneController::class, 'index']);
@@ -251,6 +256,12 @@ Route::prefix('v1')->group(function () {
             Route::put('downtime-components/{downtimeComponent}/dependencies', [DowntimeComponentController::class, 'syncDependencies']);
             Route::patch('downtime-components/{downtimeComponent}/deactivate', [DowntimeComponentController::class, 'deactivate']);
             Route::delete('downtime-components/{downtimeComponent}', [DowntimeComponentController::class, 'destroy']);
+
+            // shared application/system master (write)
+            Route::post('applications', [ApplicationController::class, 'store']);
+            Route::put('applications/{application}', [ApplicationController::class, 'update']);
+            Route::patch('applications/{application}/deactivate', [ApplicationController::class, 'deactivate']);
+            Route::delete('applications/{application}', [ApplicationController::class, 'destroy']);
 
             //calendar event routes
             Route::post('/calendar-events/', [CalendarEventController::class, 'store']);

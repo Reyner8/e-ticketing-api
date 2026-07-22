@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+/**
+ * @deprecated Prefer master table `applications` (code). Kept for reference of legacy codes.
+ */
 enum TargetApplication: string
 {
     case SIMRS = 'simrs';
@@ -14,7 +17,7 @@ enum TargetApplication: string
         return match ($this) {
             self::SIMRS => 'SIMRS',
             self::RME => 'RME',
-            self::Antrean => 'ANTREAN',
+            self::Antrean => 'Antrean',
             self::Lainnya => 'Lainnya',
         };
     }

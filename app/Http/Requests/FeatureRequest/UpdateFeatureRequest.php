@@ -6,7 +6,7 @@ use App\Enums\AssignedTeam;
 use App\Enums\FeatureRequestStatus;
 use App\Enums\Priorities;
 use App\Enums\RequestType;
-use App\Enums\TargetApplication;
+use App\Services\ApplicationService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
@@ -41,7 +41,7 @@ class UpdateFeatureRequest extends FormRequest
             'title' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
             'request_type' => ['sometimes', 'string', Rule::in(RequestType::values())],
-            'target_application' => ['nullable', 'string', Rule::in(TargetApplication::values())],
+            'target_application' => ['nullable', 'string', 'max:50', ApplicationService::activeCodeExistsRule()],
             'priority' => ['sometimes', 'string', Rule::in(Priorities::values())],
             'status' => ['sometimes', 'string', Rule::in(FeatureRequestStatus::values())],
             'progress' => 'sometimes|integer|min:0|max:100',

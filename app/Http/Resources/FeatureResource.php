@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Application;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,10 +19,11 @@ class FeatureResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'request_type' => $this->request_type,
-            'target_application' => $this->target_application ? [
-                'value' => $this->target_application->value,
-                'label' => $this->target_application->label(),
-            ] : null,
+            'target_application' => Application::toOption(
+                is_object($this->target_application)
+                    ? $this->target_application->value
+                    : $this->target_application
+            ),
             'priority' => $this->priority,
             'status' => $this->status,
             'progress' => $this->progress,
@@ -41,8 +43,8 @@ class FeatureResource extends JsonResource
             ] : null,
             'sla_breached' => (bool) $this->sla_breached,
             'due_date' => $this->due_date,
-            'created_at' => $this->created_at->format('Y-m-d H:i:s'),
-            'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
+            'created_at' => $this->created_at?->format('Y-m-d H:i:s'),
+            'updated_at' => $this->updated_at?->format('Y-m-d H:i:s'),
         ]);
     }
 }
