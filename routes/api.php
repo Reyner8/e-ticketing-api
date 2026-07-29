@@ -135,7 +135,7 @@ Route::prefix('v1')->group(function () {
             //dashboard & export routes
             Route::get('/dashboard/stats', [DashboardController::class, 'stats']);
             Route::get('/exports/{dataset}', [ExportController::class, 'export'])
-                ->where('dataset', 'tickets|errors|features|downtimes|users');
+                ->where('dataset', 'tickets|errors|features|downtimes|users|staff-performance|quality-indicators');
 
             //merge ticket routes
             Route::get('/tickets/{ticket}/merge', [MergedTicketController::class, 'index']);
@@ -149,8 +149,7 @@ Route::prefix('v1')->group(function () {
             // Ops logging — read for all authenticated roles (sidebar hides from reporter)
             Route::get('/backup-restore-tests', [BackupRestoreTestController::class, 'index']);
             Route::get('/backup-restore-tests/{restoreTest}', [BackupRestoreTestController::class, 'show']);
-            Route::apiResource('backup-restore-tests.attachments', BackupRestoreTestAttachmentController::class)
-                ->only(['index', 'store', 'destroy']);
+            Route::get('/backup-restore-tests/{backup_restore_test}/attachments', [BackupRestoreTestAttachmentController::class, 'index']);
 
             Route::get('/server-room-visitors', [ServerRoomVisitorController::class, 'index']);
             Route::get('/server-room-visitors/{visitor}', [ServerRoomVisitorController::class, 'show']);
@@ -274,6 +273,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/backup-restore-tests', [BackupRestoreTestController::class, 'store']);
             Route::put('/backup-restore-tests/{restoreTest}', [BackupRestoreTestController::class, 'update']);
             Route::delete('/backup-restore-tests/{restoreTest}', [BackupRestoreTestController::class, 'destroy']);
+            Route::post('/backup-restore-tests/{backup_restore_test}/attachments', [BackupRestoreTestAttachmentController::class, 'store']);
+            Route::delete('/backup-restore-tests/{backup_restore_test}/attachments/{attachment}', [BackupRestoreTestAttachmentController::class, 'destroy']);
 
             Route::post('/server-room-visitors', [ServerRoomVisitorController::class, 'store']);
             Route::put('/server-room-visitors/{visitor}', [ServerRoomVisitorController::class, 'update']);

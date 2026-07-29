@@ -29,10 +29,25 @@ class DashboardController extends Controller
 
         $snapshots = $this->workloadService->getLatestPerTeam();
         $monthStart = now()->startOfMonth();
+        $now = now();
+        // Ongoing events store duration=null until resolved — include elapsed minutes so far.
         $downtimeMinutes = (int) DowntimeRecord::query()
             ->where('start_time', '>=', $monthStart)
-            ->sum('duration');
-        $periodHours = max(1, $monthStart->diffInHours(now()));
+            ->get(['start_time', 'end_time', 'duration'])
+            ->sum(function (DowntimeRecord $record) use ($now) {
+                if (! is_null($record->duration)) {
+                    return (int) $record->duration;
+                }
+
+                if ($record->start_time) {
+                    $end = $record->end_time ?? $now;
+
+                    return max(0, (int) $record->start_time->diffInMinutes($end));
+                }
+
+                return 0;
+            });
+        $periodHours = max(1, $monthStart->diffInHours($now));
         $uptimePercent = round(max(0, min(100, 100 - (($downtimeMinutes / 60) / $periodHours) * 100)), 1);
 
         return ApiResponse::success([

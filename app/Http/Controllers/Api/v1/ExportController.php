@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\DowntimeRecord;
 use App\Models\ErrorReport;
@@ -28,7 +29,7 @@ class ExportController extends Controller
     {
         abort_unless(in_array($dataset, self::DATASETS, true), 404, 'Unknown export dataset.');
 
-        if ($dataset === 'users' && $request->user()?->role !== 'admin') {
+        if ($dataset === 'users' && $request->user()?->role !== UserRole::Admin) {
             abort(403, 'Only administrators can export users.');
         }
 
