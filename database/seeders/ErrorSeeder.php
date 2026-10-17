@@ -3,7 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\ErrorReport;
+use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Auth;
 use Faker\Factory as FakerFactory;
 
 class ErrorSeeder extends Seeder
@@ -14,8 +17,22 @@ class ErrorSeeder extends Seeder
     public function run(): void
     {
         $faker = FakerFactory::create('id_ID');
+
+        // Observer error report mencatat activity log dengan Auth::id();
+        // saat seeding tidak ada sesi, jadi login sebagai user pertama.
+        $firstUserId = User::query()->min('id');
+        if ($firstUserId) {
+            Auth::loginUsingId((int) $firstUserId);
+        }
+
+        // error_reports.id string (format sama dengan ErrorReportService);
+        // MySQL menolak insert tanpa id, dan firstOrCreate membuat
+        // seeder aman dijalankan ulang. source_ticket_id harus id
+        // ticket yang benar-benar ada (FK).
+        $ticketIds = Ticket::query()->pluck('id')->all();
         for ($i=0; $i < 10; $i++) {
-            ErrorReport::create([
+            $id = sprintf('ERR-%s-%03d', now()->format('Y'), $i + 1);
+            ErrorReport::firstOrCreate(['id' => $id], [
                 'title' => $faker->sentence,
                 'description' => $faker->paragraph,
                 'category' => $faker->randomElement(['hardware', 'software', 'network']),
@@ -29,12 +46,13 @@ class ErrorSeeder extends Seeder
                 'due_date' => $faker->dateTimeBetween('now', '+1 month'),
                 'completion_date' => $faker->dateTimeBetween('now', '+2 months'),
                 'sla_breached' => $faker->boolean,
-                'source_ticket_id' => $faker->numberBetween(1, 10),
+                'source_ticket_id' => $ticketIds === [] ? null : $faker->randomElement($ticketIds),
                 'is_direct_input' => $faker->boolean,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-
         }
+
+        Auth::logout();
     }
 }

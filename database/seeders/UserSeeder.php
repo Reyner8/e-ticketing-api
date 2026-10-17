@@ -45,7 +45,8 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $user) {
-            User::create($user);
+            // firstOrCreate agar seeder aman dijalankan ulang (idempotent).
+            User::firstOrCreate(['email' => $user['email']], $user);
         }
     }
 }
