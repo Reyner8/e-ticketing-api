@@ -14,34 +14,30 @@ use Illuminate\Support\Facades\Auth;
 /**
  * Inject catatan harian pada modul Backup & Restore Test.
  *
- * Mencatat uji backup-restore harian untuk SIMRS dan RME: backup asli
- * berjalan pukul 04:00 (tercatat di backup_datetime), uji restore
- * dikerjakan pada rentang jam kerja 07:00-18:00 WITA (tercatat sebagai
- * waktu input catatan). Semua nilai (jam restore, jenis restore, sumber
- * backup, catatan) divariasikan setiap hari agar terlihat seperti input
- * manual tim, bukan data seragam. Tanpa Faker karena image prod dibangun
- * tanpa dev dependency.
+ * Skenario tetap: backup otomatis SIMRS, RME, dan Antrean berjalan di
+ * server pukul 04:00 lalu tersalin ke komputer backup; uji restore
+ * dikerjakan di komputer restore pada rentang jam kerja 07:00-18:00
+ * WITA (tercatat sebagai waktu input catatan). Semua catatan dibuat
+ * atas nama satu user (email pertama DAILY_DATA_USERS) dan
+ * divariasikan setiap hari agar terlihat seperti input manual. Tanpa
+ * Faker karena image prod dibangun tanpa dev dependency.
  *
  * Pemakaian:
- *   php artisan inject:daily-data --app=simrs   # catatan hari ini utk SIMRS
- *   php artisan inject:daily-data --app=rme     # catatan hari ini utk RME
- *   php artisan inject:daily-data --backfill    # isi historis --from s.d. --to
- *
- * Pencatat = email pertama pada DAILY_DATA_USERS (env); pelaksana uji
- * dirotasi acak dari daftar yang sama.
+ *   php artisan inject:daily-data --app=simrs|antrean|rme   # catatan hari ini
+ *   php artisan inject:daily-data --backfill                # isi historis --from s.d. --to
  */
 class InjectDailyDataCommand extends Command
 {
     /** Kode aplikasi yang diuji backup-restore-nya (sesuai master applications). */
-    private const TESTED_APPS = ['simrs', 'rme'];
+    private const TESTED_APPS = ['simrs', 'antrean', 'rme'];
 
     protected $signature = 'inject:daily-data
-        {--app= : Kode aplikasi uji restore: simrs atau rme}
+        {--app= : Kode aplikasi uji restore: simrs, antrean, atau rme}
         {--backfill : Isi historis dari --from sampai --to}
         {--from= : Tanggal mulai backfill (Y-m-d), default 30 hari lalu}
         {--to= : Tanggal akhir backfill (Y-m-d), default hari ini}';
 
-    protected $description = 'Inject catatan harian uji backup-restore SIMRS & RME (backup 04:00, restore 07:00-18:00)';
+    protected $description = 'Inject catatan harian uji backup-restore SIMRS, Antrean & RME (backup server 04:00, uji restore di komputer restore 07:00-18:00)';
 
     /** @var array<int, User> */
     private array $attributableUsers = [];
@@ -54,7 +50,7 @@ class InjectDailyDataCommand extends Command
 
         $app = (string) $this->option('app');
         if (! in_array($app, self::TESTED_APPS, true)) {
-            $this->error('Tentukan --app=simrs atau --app=rme (atau gunakan --backfill).');
+            $this->error('Tentukan --app=simrs, --app=antrean, atau --app=rme (atau gunakan --backfill).');
 
             return self::FAILURE;
         }
@@ -103,9 +99,9 @@ class InjectDailyDataCommand extends Command
             return;
         }
 
-        $creator = $this->creatorUser();
-        $performer = $this->pickPerformer();
-        if ($creator === null || $performer === null) {
+        // Semua catatan atas nama satu user (email pertama DAILY_DATA_USERS).
+        $user = $this->attributableUser();
+        if ($user === null) {
             $this->warn('DAILY_DATA_USERS belum berisi user aktif — catatan dilewati.');
 
             return;
@@ -116,29 +112,28 @@ class InjectDailyDataCommand extends Command
         $appName = Application::query()->where('code', $app)->value('name') ?? strtoupper($app);
 
         $restoreType = $this->weighted(['database' => 60, 'both' => 25, 'application' => 15]);
-        $backupSource = $this->weighted(['nas' => 55, 'server' => 30, 'hdd' => 15]);
-        $environment = $this->weighted(['server_staging' => 70, 'local_development' => 30]);
         $result = $this->weighted(['success' => 85, 'success_with_notes' => 10, 'failed' => 5]);
 
-        // Backup asli berjalan pukul 04:00 — waktu backup konsisten tiap hari.
+        // Backup asli berjalan di server pukul 04:00 — konsisten tiap hari.
         $backupAt = $date->copy()->setTime(4, random_int(0, 10));
 
         // Waktu uji restore = jam input catatan; acak 07:00-18:00 dan
         // berbeda setiap hari (untuk hari ini tidak boleh lewat dari sekarang).
         $testedAt = $this->randomWorkTime($date) ?? now();
 
-        Auth::loginUsingId($creator->id);
+        Auth::loginUsingId($user->id);
 
         $record = app(BackupRestoreTestService::class)->store([
             'test_date' => $date->toDateString(),
-            'performed_by' => $performer->id,
+            'performed_by' => $user->id,
             'application_system' => $app,
             'restore_type' => $restoreType,
             'backup_datetime' => $backupAt,
-            'backup_source' => $backupSource,
-            'test_environment' => $environment,
+            // Skenario tetap: backup otomatis dari server, diuji di komputer restore.
+            'backup_source' => 'server',
+            'test_environment' => 'local_development',
             'result' => $result,
-            'notes' => $this->buildNotes($appName, $source = $backupSource, $environment, $result, $backupAt, $testedAt),
+            'notes' => $this->buildNotes($appName, $result, $backupAt, $testedAt),
             'follow_up' => $result === 'success' ? null : $this->buildFollowUp($result),
         ]);
 
@@ -148,7 +143,7 @@ class InjectDailyDataCommand extends Command
 
         Auth::logout();
 
-        $this->info("RST {$record->id} ({$appName}, {$result}) — pelaksana {$performer->email}, dicatat {$testedAt->format('d-m-Y H:i')}");
+        $this->info("RST {$record->id} ({$appName}, {$result}) — dicatat {$testedAt->format('d-m-Y H:i')} oleh {$user->email}");
     }
 
     private function recordExists(Carbon $date, string $app): bool
@@ -163,59 +158,58 @@ class InjectDailyDataCommand extends Command
     // Catatan kombinatif (ratusan varian, praktis tidak ada yang kembar)
     // ------------------------------------------------------------------
 
-    private function buildNotes(string $appName, string $source, string $environment, string $result, Carbon $backupAt, Carbon $testedAt): string
+    private function buildNotes(string $appName, string $result, Carbon $backupAt, Carbon $testedAt): string
     {
-        $sourceLabel = ['nas' => 'NAS', 'server' => 'server backup', 'hdd' => 'harddisk eksternal'][$source];
-        $envLabel = $environment === 'server_staging' ? 'server staging' : 'laptop uji lokal';
         $duration = random_int(8, 45);
         $clock = $backupAt->format('H:i');
+        $testedClock = $testedAt->format('H:i');
 
         if ($result === 'failed') {
             $opener = $this->pick([
-                "Uji restore {$appName} dari {$sourceLabel} (backup pukul {$clock}) tidak berhasil",
-                "Proses restore {$appName} ke {$envLabel} gagal dilanjutkan",
-                "Pengujian restore backup harian {$appName} hari ini mengalami kegagalan",
+                "Uji restore {$appName} memakai backup otomatis server pukul {$clock} tidak berhasil",
+                "Restore {$appName} di komputer restore dari hasil salinan backup pukul {$clock} gagal",
+                "Pengujian restore harian {$appName} hari ini mengalami kegagalan",
             ]);
             $detail = $this->pick([
-                'Import database berhenti di tengah proses dengan pesan dump terpotong',
-                'File backup tidak dapat dibuka, dugaan file korup saat penyalinan',
-                'Aplikasi gagal terhubung ke database hasil restore',
-                'Proses berhenti di sekitar 70% karena ruang disk tujuan tidak cukup',
+                'File hasil salinan ke komputer backup terpotong sehingga import database gagal',
+                'Restore di komputer restore berhenti di tengah proses import',
+                'Aplikasi tidak dapat terhubung ke database hasil restore',
+                'Ruang disk komputer restore tidak cukup saat proses berjalan',
             ]);
 
             return "{$opener}. {$detail}. Durasi percobaan ±{$duration} menit sebelum dihentikan.";
         }
 
         $opener = $this->pick([
-            "Uji restore {$appName} dari {$sourceLabel} (backup pukul {$clock}) dikerjakan pukul {$testedAt->format('H:i')} WITA",
-            "Restore backup harian {$appName} ke {$envLabel} telah diuji",
-            "Pengujian pemulihan data {$appName} dari {$sourceLabel} dilakukan pada sesi ini",
-            "Restore database {$appName} hasil backup pukul {$clock} sudah dicoba ke {$envLabel}",
+            "Backup otomatis {$appName} pukul {$clock} dari server sudah tersalin ke komputer backup dan diuji restore",
+            "Restore {$appName} di komputer restore memakai backup otomatis server pukul {$clock}",
+            "Backup harian {$appName} dari server (pukul {$clock}) diuji restore ke komputer restore",
+            "Uji restore {$appName} menggunakan hasil backup otomatis server pukul {$clock}, dikerjakan pukul {$testedClock} WITA",
         ]);
 
         if ($result === 'success_with_notes') {
             $detail = $this->pick([
-                'Data utama berhasil terimpor namun proses berjalan lambat',
-                'Aplikasi berjalan normal dengan beberapa indeks perlu dibuat ulang manual',
-                'Restore berhasil, sebagian konfigurasi aplikasi harus disetel ulang',
+                'Data utama terimpor tetapi proses salin ke komputer restore berjalan lambat',
+                'Restore sukses, beberapa indeks perlu dibuat ulang manual di komputer restore',
+                'Aplikasi normal setelah konfigurasi disetel ulang pada komputer restore',
                 'Data tampil lengkap, hanya performa query awal yang menurun',
             ]);
         } else {
             $detail = $this->pick([
-                'Login aplikasi dan pembukaan data pasien berjalan normal',
-                'Jumlah record tabel utama sesuai dengan backup terakhir',
+                'Login dan pembukaan data pasien di komputer restore berjalan normal',
+                'Jumlah record tabel utama sesuai dengan backup di server',
                 'Data kunjungan, farmasi, dan penunjang tampil sesuai tanggal backup',
-                'Tidak ditemukan tabel yang gagal terimpor, integritas data baik',
-                'Transaksi harian dapat dilanjutkan dari data hasil restore',
-                'Verifikasi acak pada modul registrasi dan farmasi sesuai harapan',
+                'Tidak ada tabel yang gagal terimpor saat proses restore',
+                'Aplikasi dapat langsung dijalankan dari hasil restore',
+                'Verifikasi acak modul registrasi dan farmasi sesuai harapan',
             ]);
         }
 
         $closing = $this->pick([
             'Durasi proses ±'.$duration.' menit. Hasil dinyatakan sesuai harapan.',
-            'Total waktu proses sekitar '.$duration.' menit. Backup dinyatakan andal untuk pemulihan.',
+            'Total waktu proses sekitar '.$duration.' menit. Backup terbukti andal untuk pemulihan.',
             'Pengujian selesai dalam ±'.$duration.' menit dan prosedur sesuai SOP.',
-            'Catatan ini sebagai bukti uji restore rutin harian.',
+            'Dicatat sebagai bukti uji restore rutin harian.',
         ]);
 
         return "{$opener}. {$detail}. {$closing}";
@@ -225,16 +219,16 @@ class InjectDailyDataCommand extends Command
     {
         return $result === 'failed'
             ? $this->pick([
-                'Ulangi restore dengan dump terbaru dan verifikasi ukuran file backup.',
-                'Cek integritas file backup pada NAS, ulangi uji pada jendela malam.',
-                'Koordinasi dengan vendor untuk analisis kegagalan import database.',
-                'Bersihkan ruang disk tujuan sebelum mengulang proses restore.',
+                'Ulangi salinan backup dari server ke komputer backup, lalu restore ulang.',
+                'Verifikasi ukuran file dump di server sebelum mengulang restore.',
+                'Bersihkan ruang disk komputer restore sebelum mengulang proses.',
+                'Koordinasi dengan vendor bila kegagalan restore berulang.',
             ])
             : $this->pick([
                 'Pantau durasi restore pada pengujian berikutnya.',
                 'Jadwalkan pembuatan ulang indeks pada jendela maintenance.',
                 'Dokumentasikan langkah penyetelan manual ke SOP restore.',
-                'Evaluasi kebutuhan peningkatan spesifikasi server staging.',
+                'Evaluasi kebutuhan peningkatan spesifikasi komputer restore.',
             ]);
     }
 
@@ -287,11 +281,11 @@ class InjectDailyDataCommand extends Command
         return $items[array_rand($items)];
     }
 
-    /** @return array<int, User> terurut sesuai urutan email pada DAILY_DATA_USERS */
-    private function attributableUsers(): array
+    /** Satu user pemilik seluruh catatan = email pertama pada DAILY_DATA_USERS. */
+    private function attributableUser(): ?User
     {
         if ($this->attributableUsers === []) {
-            $emails = collect(explode(',', (string) env('DAILY_DATA_USERS', 'alfa@gmail.com,apin@gmail.com,reynerneo08@gmail.com')))
+            $emails = collect(explode(',', (string) env('DAILY_DATA_USERS', 'reynerneo08@gmail.com')))
                 ->map(fn (string $email) => trim($email))
                 ->filter();
 
@@ -299,30 +293,12 @@ class InjectDailyDataCommand extends Command
                 ->whereIn('email', $emails)
                 ->where('is_active', true)
                 ->get()
-                ->sortBy(function (User $user) use ($emails) {
-                    return $emails->search($user->email);
-                })
+                ->sortBy(fn (User $user) => $emails->search($user->email))
                 ->values()
                 ->all();
         }
 
-        return $this->attributableUsers;
-    }
-
-    /** Pencatat catatan = email pertama pada DAILY_DATA_USERS (pemilik aplikasi). */
-    private function creatorUser(): ?User
-    {
-        $users = $this->attributableUsers();
-
-        return $users[0] ?? null;
-    }
-
-    /** Pelaksana uji dirotasi acak dari seluruh user pada DAILY_DATA_USERS. */
-    private function pickPerformer(): ?User
-    {
-        $users = $this->attributableUsers();
-
-        return $users === [] ? null : $users[array_rand($users)];
+        return $this->attributableUsers[0] ?? null;
     }
 
     private function ensureApplicationMaster(): void
