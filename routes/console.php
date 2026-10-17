@@ -9,21 +9,21 @@ Artisan::command('inspire', function () {
 })->purpose('Display the inspiring quote');
 
 /*
- * Data harian uji backup-restore.
+ * Catatan harian uji backup-restore pada modul Backup & Restore Test.
  * Aktif hanya bila DAILY_DATA_ENABLED=true (diset di .env VPS).
- * Eksekusi sengaja acak per menit sehingga pola jam data berbeda setiap
- * hari — hanya jam backup (±04:00 pada catatan RST) yang tetap.
+ * Pemicu acak per menit sehingga jam pencatatan berbeda setiap hari —
+ * hanya jam backup (±04:00 pada isi catatan) yang tetap.
  */
-Schedule::command('inject:daily-data --rst')
+Schedule::command('inject:daily-data --app=simrs')
     ->everyMinute()
     ->between('07:00', '09:55')
     ->when(function () {
         return env('DAILY_DATA_ENABLED', false) && random_int(1, 1000) <= 25;
     });
 
-Schedule::command('inject:daily-data --activity')
+Schedule::command('inject:daily-data --app=rme')
     ->everyMinute()
-    ->between('07:30', '17:55')
+    ->between('07:30', '12:55')
     ->when(function () {
-        return env('DAILY_DATA_ENABLED', false) && random_int(1, 1000) <= 5;
+        return env('DAILY_DATA_ENABLED', false) && random_int(1, 1000) <= 20;
     });
