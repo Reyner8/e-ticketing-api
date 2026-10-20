@@ -178,7 +178,7 @@ class DowntimeMonitoringTest extends TestCase
         ]);
     }
 
-    public function test_resolved_record_only_allows_resolution_field_updates(): void
+    public function test_resolved_record_can_be_edited_but_not_reopened(): void
     {
         Sanctum::actingAs($this->staff());
 
@@ -194,26 +194,32 @@ class DowntimeMonitoringTest extends TestCase
         ]);
 
         $this->putJson("/api/v1/downtime-records/{$record->id}", [
-            'title' => 'Changed Title',
+            'title' => 'Corrected Title',
             'root_cause' => 'Fiber cut',
+            'preventive_measures' => 'Add backup link',
+            'affected_users' => 120,
+        ])->assertOk()
+            ->assertJsonPath('data.title', 'Corrected Title')
+            ->assertJsonPath('data.root_cause', 'Fiber cut')
+            ->assertJsonPath('data.status.value', DowntimeStatus::Resolved->value);
+
+        $this->putJson("/api/v1/downtime-records/{$record->id}", [
+            'status' => DowntimeStatus::Ongoing->value,
         ])->assertUnprocessable()
             ->assertJsonValidationErrors('status');
 
         $this->putJson("/api/v1/downtime-records/{$record->id}", [
-            'root_cause' => 'Fiber cut',
-            'preventive_measures' => 'Add backup link',
-            'affected_users' => 120,
-            'estimated_cost' => 500000,
-        ])->assertOk()
-            ->assertJsonPath('data.root_cause', 'Fiber cut')
-            ->assertJsonPath('data.status.value', DowntimeStatus::Resolved->value);
+            'end_time' => null,
+        ])->assertOk();
 
         $this->assertDatabaseHas('downtime_records', [
             'id' => $record->id,
-            'title' => 'Legacy Resolved Without Root Cause',
+            'title' => 'Corrected Title',
             'root_cause' => 'Fiber cut',
             'preventive_measures' => 'Add backup link',
             'affected_users' => 120,
+            'status' => DowntimeStatus::Resolved->value,
+            'duration' => 60,
         ]);
     }
 

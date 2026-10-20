@@ -72,15 +72,21 @@ class DowntimeRecordService
     public function update(DowntimeRecord $record, array $data): DowntimeRecord
     {
         return DB::transaction(function () use ($record, $data) {
-            if ($record->isResolved()) {
-                return $this->updateResolvedResolution($record, $data);
+            $isResolved = $record->isResolved();
+
+            if ($isResolved && array_key_exists('status', $data)) {
+                throw ValidationException::withMessages([
+                    'status' => ['Resolved downtime record cannot change status.'],
+                ]);
             }
 
             $startTime = isset($data['start_time'])
                 ? Carbon::parse($data['start_time'])
                 : $record->start_time;
             $endTime = array_key_exists('end_time', $data)
-                ? ($data['end_time'] !== null ? Carbon::parse($data['end_time']) : null)
+                ? ($data['end_time'] !== null
+                    ? Carbon::parse($data['end_time'])
+                    : ($isResolved ? $record->end_time : null))
                 : $record->end_time;
 
             if ($endTime && ! $endTime->greaterThan($startTime)) {
@@ -107,9 +113,11 @@ class DowntimeRecordService
 
             if (array_key_exists('end_time', $data) || isset($data['start_time'])) {
                 $payload['duration'] = $endTime ? (int) $startTime->diffInMinutes($endTime) : null;
-                $payload['status'] = $endTime
+                $payload['status'] = $isResolved
                     ? DowntimeStatus::Resolved->value
-                    : DowntimeStatus::Ongoing->value;
+                    : ($endTime
+                        ? DowntimeStatus::Resolved->value
+                        : DowntimeStatus::Ongoing->value);
             }
 
             $record->update($payload);
@@ -135,26 +143,6 @@ class DowntimeRecordService
 
             return $this->loadRecord($record->fresh());
         });
-    }
-
-    private function updateResolvedResolution(DowntimeRecord $record, array $data): DowntimeRecord
-    {
-        $allowed = ['root_cause', 'preventive_measures', 'affected_users', 'estimated_cost'];
-
-        $rejected = collect($data)
-            ->keys()
-            ->reject(fn ($key) => in_array($key, $allowed))
-            ->values();
-
-        if ($rejected->isNotEmpty()) {
-            throw ValidationException::withMessages([
-                'status' => ['Resolved downtime record only allows updating: '.implode(', ', $allowed).'.'],
-            ]);
-        }
-
-        $record->update($data);
-
-        return $this->loadRecord($record->fresh());
     }
 
     public function resolve(DowntimeRecord $record, array $data): DowntimeRecord
