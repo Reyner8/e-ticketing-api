@@ -73,9 +73,7 @@ class DowntimeRecordService
     {
         return DB::transaction(function () use ($record, $data) {
             if ($record->isResolved()) {
-                throw ValidationException::withMessages([
-                    'status' => ['Downtime record is already resolved'],
-                ]);
+                return $this->updateResolvedResolution($record, $data);
             }
 
             $startTime = isset($data['start_time'])
@@ -137,6 +135,26 @@ class DowntimeRecordService
 
             return $this->loadRecord($record->fresh());
         });
+    }
+
+    private function updateResolvedResolution(DowntimeRecord $record, array $data): DowntimeRecord
+    {
+        $allowed = ['root_cause', 'preventive_measures', 'affected_users', 'estimated_cost'];
+
+        $rejected = collect($data)
+            ->keys()
+            ->reject(fn ($key) => in_array($key, $allowed))
+            ->values();
+
+        if ($rejected->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'status' => ['Resolved downtime record only allows updating: '.implode(', ', $allowed).'.'],
+            ]);
+        }
+
+        $record->update($data);
+
+        return $this->loadRecord($record->fresh());
     }
 
     public function resolve(DowntimeRecord $record, array $data): DowntimeRecord

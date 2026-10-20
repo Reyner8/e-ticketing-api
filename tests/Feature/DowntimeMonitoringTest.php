@@ -178,6 +178,45 @@ class DowntimeMonitoringTest extends TestCase
         ]);
     }
 
+    public function test_resolved_record_only_allows_resolution_field_updates(): void
+    {
+        Sanctum::actingAs($this->staff());
+
+        $record = DowntimeRecord::create([
+            'title' => 'Legacy Resolved Without Root Cause',
+            'type' => DowntimeType::Unplanned,
+            'reason' => 'ISP down',
+            'start_time' => now()->subHours(3),
+            'end_time' => now()->subHours(2),
+            'duration' => 60,
+            'impact' => DowntimeImpact::Medium,
+            'status' => DowntimeStatus::Resolved,
+        ]);
+
+        $this->putJson("/api/v1/downtime-records/{$record->id}", [
+            'title' => 'Changed Title',
+            'root_cause' => 'Fiber cut',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->putJson("/api/v1/downtime-records/{$record->id}", [
+            'root_cause' => 'Fiber cut',
+            'preventive_measures' => 'Add backup link',
+            'affected_users' => 120,
+            'estimated_cost' => 500000,
+        ])->assertOk()
+            ->assertJsonPath('data.root_cause', 'Fiber cut')
+            ->assertJsonPath('data.status.value', DowntimeStatus::Resolved->value);
+
+        $this->assertDatabaseHas('downtime_records', [
+            'id' => $record->id,
+            'title' => 'Legacy Resolved Without Root Cause',
+            'root_cause' => 'Fiber cut',
+            'preventive_measures' => 'Add backup link',
+            'affected_users' => 120,
+        ]);
+    }
+
     public function test_analytics_and_export_include_structured_fields(): void
     {
         Sanctum::actingAs($this->staff());
