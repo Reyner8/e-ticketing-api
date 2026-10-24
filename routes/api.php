@@ -16,6 +16,8 @@ use App\Http\Controllers\Api\v1\CalendarEventController;
 use App\Http\Controllers\Api\v1\Comment\MentionController;
 use App\Http\Controllers\Api\v1\ServerRoomInspectionController;
 use App\Http\Controllers\Api\v1\ServerRoomVisitorController;
+use App\Http\Controllers\Api\v1\SecurityAuditController;
+use App\Http\Controllers\Api\v1\SecurityAuditFindingController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\v1\TicketController;
@@ -156,6 +158,11 @@ Route::prefix('v1')->group(function () {
 
             Route::get('/server-room-inspections', [ServerRoomInspectionController::class, 'index']);
             Route::get('/server-room-inspections/{inspection}', [ServerRoomInspectionController::class, 'show']);
+
+            // Security audit — read for all authenticated roles (sidebar hides from reporter)
+            Route::get('/security-audits', [SecurityAuditController::class, 'index']);
+            Route::get('/security-audits/{securityAudit}', [SecurityAuditController::class, 'show']);
+            Route::get('/security-audits/{securityAudit}/findings', [SecurityAuditFindingController::class, 'index']);
         });
 
         // Read user list for assignment / escort pickers.
@@ -284,6 +291,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/server-room-inspections', [ServerRoomInspectionController::class, 'store']);
             Route::put('/server-room-inspections/{inspection}', [ServerRoomInspectionController::class, 'update']);
             Route::delete('/server-room-inspections/{inspection}', [ServerRoomInspectionController::class, 'destroy']);
+
+            // Security audit writes
+            Route::post('/security-audits', [SecurityAuditController::class, 'store']);
+            Route::put('/security-audits/{securityAudit}', [SecurityAuditController::class, 'update']);
+            Route::delete('/security-audits/{securityAudit}', [SecurityAuditController::class, 'destroy']);
+            Route::post('/security-audits/{securityAudit}/findings', [SecurityAuditFindingController::class, 'store']);
+            Route::put('/security-audit-findings/{finding}', [SecurityAuditFindingController::class, 'update']);
+            Route::delete('/security-audit-findings/{finding}', [SecurityAuditFindingController::class, 'destroy']);
 
             //system configuration routes
             Route::get('/system-configuration', [SystemConfigurationController::class, 'index']);
