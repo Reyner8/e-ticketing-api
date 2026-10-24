@@ -65,12 +65,4 @@ class ConversionHistoryService
             ->latest('converted_at')
             ->first();
     }
-
-    public function getByConverter(int $userId, int $perPage = 15): LengthAwarePaginator
-    {
-        return ConversionHistory::where('converted_by', $userId)
-        ->with(['sourceTicket:id,title,status'])
-        ->latest('converted_at')
-        ->paginate(min($perPage, 50));
-    }
 }

@@ -91,18 +91,6 @@ class FeatureRequest extends Model
         return $this->hasMany(Milestone::class, 'feature_request_id');
     }
 
-    public function completedMilestone(): HasMany
-    {
-        return $this->hasMany(Milestone::class, 'feature_request_id')
-            ->where('is_completed', true);
-    }
-
-    public function pendingMilestone(): HasMany
-    {
-        return $this->hasMany(Milestone::class, 'feature_request_id')
-            ->where('is_completed', false);
-    }
-
     /**
      * Progress = rata-rata progress semua milestone.
      * Tanpa milestone → 0.

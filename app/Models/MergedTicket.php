@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\WithoutIncrementing;
 use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 
 #[Fillable([
@@ -23,20 +22,4 @@ class MergedTicket extends Pivot
     public $casts = [
         'merged_at' => 'datetime'
     ];
-
-    // Relations
-    public function parentTicket(): BelongsTo
-    {
-        return $this->belongsTo(Ticket::class, 'parent_ticket_id');
-    }
-
-    public function mergedTicket(): BelongsTo
-    {
-        return $this->belongsTo(Ticket::class, 'merged_ticket_id');
-    }
-
-    public function merger(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'merged_by');
-    }
 }

@@ -51,17 +51,6 @@ class ActivityLogService
         );
     }
 
-    public function logAssigned(Model $loggable, string $assigneeName): ActivityLog
-    {
-        return $this->log(
-            loggable: $loggable,
-            action: ActivityAction::Assigned,
-            description: class_basename($loggable) . " was assigned to {$assigneeName}.",
-            performedBy: Auth::id(),
-            details: ['assignee_name' => $assigneeName],
-        );
-    }
-
     public function logCommented(Model $loggable, string $preview): ActivityLog
     {
         return $this->log(

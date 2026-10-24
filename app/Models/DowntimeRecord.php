@@ -88,23 +88,9 @@ class DowntimeRecord extends Model
             ->withPivot('role');
     }
 
-    public function isOngoing(): bool
-    {
-        return $this->status === DowntimeStatus::Ongoing;
-    }
-
     public function isResolved(): bool
     {
         return $this->status === DowntimeStatus::Resolved;
-    }
-
-    public function calculateDuration(): ?int
-    {
-        if (is_null($this->end_time) || is_null($this->start_time)) {
-            return null;
-        }
-
-        return (int) $this->start_time->diffInMinutes($this->end_time);
     }
 
     public function getFormattedDurationAttribute(): ?string

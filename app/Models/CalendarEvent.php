@@ -65,11 +65,6 @@ class CalendarEvent extends Model
         return ! is_null($this->recurring_frequency);
     }
 
-    public function isAllDay(): bool
-    {
-        return $this->all_day === true;
-    }
-
     public function getDurationMinutesAttribute(): int
     {
         return (int) $this->start->diffInMinutes($this->end);
@@ -79,12 +74,6 @@ class CalendarEvent extends Model
     public function scopeByType(Builder $query, string $type): Builder
     {
         return $query->where('type', $type);
-    }
-
-    public function scopeInRange(Builder $query, string $from, string $to): Builder
-    {
-        return $query->where('start', '>=', $from)
-            ->where('end', '<=', $to);
     }
 
     public function scopeUpcoming(Builder $query): Builder

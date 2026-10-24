@@ -116,22 +116,7 @@ class User extends Authenticatable
         return $this->role === UserRole::Admin;
     }
 
-    public function isReporter(): bool
-    {
-        return $this->role === UserRole::Reporter;
-    }
-
-    public function isTeamLead(): bool
-    {
-        return $this->role === UserRole::TeamLead;
-    }
-
     // Scopes
-    public function scopeActive(Builder $query): Builder
-    {
-        return $query->where('is_active', true);
-    }
-
     public function scopeByRole(Builder $query, string $role): Builder
     {
         return $query->where('role', $role);
@@ -151,10 +136,5 @@ class User extends Authenticatable
     public function assignee(): HasMany
     {
         return $this->hasMany(Ticket::class, 'assigned_to_id');
-    }
-
-    public function convertBy(): HasMany
-    {
-        return $this->hasMany(Ticket::class, 'converted_by');
     }
 }

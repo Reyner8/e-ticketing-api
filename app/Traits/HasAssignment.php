@@ -35,11 +35,6 @@ trait HasAssignment
         return $this->isAssignedToUser() || $this->isAssignedToTeam();
     }
 
-    public function isAssignable(): bool
-    {
-        return in_array($this->status, TicketStatus::assignableStatuses()); 
-    }
-
     public function getAssignedTeamLabelAttribute(): ?string
     {
         if (is_null($this->assigned_team)) {

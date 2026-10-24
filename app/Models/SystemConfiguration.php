@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Query\Builder;
 
 #[Fillable([
     'config_key',
@@ -68,11 +67,5 @@ class SystemConfiguration extends Model
                 'updated_at' => now(),
             ]
         );
-    }
-
-    // Scopes
-    public function scopeByKey(Builder $query, string $key): Builder
-    {
-        return $query->where('config_key', $key);
     }
 }

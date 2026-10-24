@@ -48,20 +48,4 @@ class ConversionHistory extends Model
     {
         return $this->belongsTo(User::class, 'converted_by');
     }
-
-    // Helpers
-    public function resolveTarget(): ?Model
-    {
-        if (is_null($this->target_type) || is_null($this->target_id)) {
-            return null;
-        }
-
-        $modelClass = match ($this->target_type) {
-            ConversionTypes::FeatureRequest => FeatureRequest::class,
-            ConversionTypes::ErrorReport => ErrorReport::class,
-            default => null,
-        };
-
-        return $modelClass ? $modelClass::find($this->target_id) : null;
-    }
 }

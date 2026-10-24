@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\SystemConfiguration;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -92,25 +91,6 @@ class SystemConfigurationService
         }
 
         return $config;
-    }
-
-    public function getCachedValue(string $key, mixed $default = null): mixed
-    {
-        $cacheKey = self::CACHE_PREFIX . $key;
-
-        return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($key, $default) {
-            $config = SystemConfiguration::where('config_key', $key)->first();
-            return $config ? $config->config_value : $default;
-        });
-    }
-
-    public function getMany(array $keys): Collection
-    {
-        return SystemConfiguration::whereIn('config_key', $keys)
-            ->get()
-            ->mapWithKeys(fn($config) => [
-                $config->config_key => $config->config_value
-            ]);
     }
 
     public function clearCache(): void

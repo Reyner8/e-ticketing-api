@@ -61,19 +61,6 @@ class NotificationService
         );
     }
 
-    public function notifySlaBreached(int $userId, Ticket $ticket): Notification
-    {
-        return $this->create(
-            userId: $userId,
-            type: NotificationType::SlaBreached,
-            title: 'SLA Breach Alert',
-            message: "Ticket {$ticket->title} has breached its SLA.",
-            priority: Priorities::High,
-            actionUrl: "/tickets/{$ticket->id}",
-            ticketId: $ticket->id,
-        );
-    }
-
     public function notifyDowntimeAlert(int $userId, DowntimeRecord $downtime): Notification
     {
         return $this->create(
@@ -84,17 +71,6 @@ class NotificationService
             priority: Priorities::High,
             actionUrl: "/downtime-records/{$downtime->id}",
             downtimeId: $downtime->id
-        );
-    }
-
-    public function notifyMaintenanceReminder(int $userId, string $details): Notification
-    {
-        return $this->create(
-            userId: $userId,
-            type: NotificationType::MaintenanceReminder,
-            title: 'Maintenance Reminder',
-            message: $details,
-            priority: Priorities::Medium
         );
     }
 

@@ -52,19 +52,4 @@ class Attachment extends Model
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
-
-    // Helpers
-    public function getFormattedSizeAttribute(): string
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $size = $this->size;
-        $index = 0;
-
-        while ($size >= 1024 && $index < count($units) - 1) {
-            $size /= 1024;
-            $index++;
-        }
-
-        return round($size, 2) . ' ' . $units[$index]; 
-    }
 }

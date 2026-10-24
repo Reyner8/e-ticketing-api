@@ -8,7 +8,6 @@ use App\Traits\HasComments;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Query\Builder;
 
 #[Fillable([
     'commentable_id',
@@ -21,16 +20,6 @@ use Illuminate\Database\Query\Builder;
 class Comment extends Model
 {
     use HasComments, HasAttachments, HasActivityLog;
-    // helpers
-    public function scopePublic(Builder $query)
-    {
-        $query->where('is_internal', false);
-    }
-
-    public function scopeInternal(Builder $query)
-    {
-        $query->where('is_internal', true);
-    }
 
     // relations
     public function commentable(): MorphTo

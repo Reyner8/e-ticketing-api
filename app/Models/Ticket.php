@@ -23,7 +23,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 #[Fillable([
@@ -115,19 +114,9 @@ class Ticket extends Model
         return $this->belongsTo(Ticket::class, 'parent_ticket_id', 'id');
     }
 
-    public function childTickets(): HasMany
-    {
-        return $this->hasMany(Ticket::class, 'parent_ticket_id', 'id');
-    }
-
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
-    }
-
-    public function conversionHistories(): HasMany
-    {
-        return $this->hasMany(ConversionHistory::class, 'source_ticket_id');
     }
 
     public function mergedTickets(): BelongsToMany
@@ -175,13 +164,6 @@ class Ticket extends Model
         return ! is_null($this->assigned_team);
     }
 
-    public function isAssignable(): bool
-    {
-        $currentStatus = $this->status->value;
-
-        return in_array($currentStatus, TicketStatus::assignableStatuses());
-    }
-
     public function isApprovable(): bool
     {
         if ($this->isPending()) {
@@ -192,25 +174,9 @@ class Ticket extends Model
             && ($this->approval_status === null || $this->approval_status === ApprovalStatus::Pending);
     }
 
-    public function convertedUrl()
-    {
-        if (!$this->isConverted()) return null;
-
-        return match ($this->converted_to_type) {
-            ConversionTypes::ErrorReport => route('error-report.show', $this->converted_to_id),
-            ConversionTypes::FeatureRequest => route('feature-request.show', $this->converted_to_id),
-            default => null
-        };
-    }
-
     public function isMerged(): bool
     {
         return $this->mergedInto()->exists();
-    }
-
-    public function hasMergedTickets(): bool
-    {
-        return $this->mergedTickets()->exists();
     }
 
     // Scopes
@@ -227,17 +193,5 @@ class Ticket extends Model
     public function scopeByCategory(Builder $query, string $category): Builder
     {
         return $query->where('category', $category);
-    }
-
-    public function scopeBySlaBreached(Builder $query): Builder
-    {
-        return $query->where('sla_breached', true);
-    }
-
-    public function scopeByOverdue(Builder $query): Builder
-    {
-        return $query->whereNotNull('due_date')
-            ->where('due_date', '<', now())
-            ->whereNotIn(['closed', 'resolved', 'converted']);
     }
 }

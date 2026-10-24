@@ -103,21 +103,9 @@ class ErrorReport extends Model
         return ! is_null($this->assigned_team);
     }
 
-    public function isAssignable(): bool
-    {
-        $currentStatus = $this->status->value;
-
-        return in_array($currentStatus, ErrorReportStatus::assignableStatuses());
-    }
-
     public function isCompleted(): bool
     {
         return $this->status === ErrorReportStatus::Completed;
-    }
-
-    public function isFromTicket(): bool
-    {
-        return ! is_null($this->source_ticket_id);
     }
 
     public function isApprovable(): bool
